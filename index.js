@@ -93,7 +93,7 @@ app.post('/login', checkLoginInfo, (req, res) => {
     }
 
     try {
-        jwt.sign({ userInfo }, secretKey, { expiresIn: '300s' }, async (err, token) => {
+        jwt.sign({ userInfo }, secretKey, { expiresIn: '100000s' }, async (err, token) => {
 
             let encryptedToken = crypto.AES.encrypt(token, secretKey).toString();
 
