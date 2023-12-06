@@ -137,7 +137,7 @@ app.post('/forgotpassword', async (req, res) => {
         let response = await register.findOne(req.body);
 
         if (response !== null) {
-            main(response.email)
+            main(response.email, response.userId, response.password)
             res.send({ success: true });
         }
         else{
