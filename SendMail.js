@@ -5,36 +5,38 @@ const cors = require('cors')
 
 const nodemailer = require("nodemailer");
 
-// async function main(email, userId, userPassword) {
 
-// const transporter = nodemailer.createTransport({
-//   host: "smtp.gmail.com",
-//   port: 465,
-//   secure: true,
-//   auth: {
-
-//     user: "rfayrfay556@gmail.com",
-//     pass: "zlnh xxmw clhc zlga",
-//   },
-// });
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.MY_EMAIL,
+    pass: process.env.MY_EMAIL_PASS,
+  },
+});
 
 
+async function main(email, userId, userPassword) {
 
-//   const info = await transporter.sendMail({
-//     from: "'Aurora ' <rfayrfay556@gmail.com>", 
-//     to: email, 
-//     subject: "Forgot passord - Aurora ", 
-//     text: "code here man", 
-//     html: `<b>Here are your credentials</b> <div> UserId: ${userId} </div> <div> Password: ${userPassword} </div>`, // html body
-//   });
+  const info = await transporter.sendMail({
+    from: process.env.MY_EMAIL, 
+    to: email, 
+    subject: "Forgot passord - Aurora ", 
+    text: "code here man", 
+    html: `<b>Here are your credentials</b> <div> UserId: ${userId} </div> <div> Password: ${userPassword} </div>`, // html body
+  });
 
-//   console.log("Message sent: %s", info.messageId);
+  console.log("Message sent: %s", info.messageId);
+return true;
+
+}
 
 
 
 const { Resend } = require('resend');
 
-const resend = new Resend('re_hKDM7NQH_Hpz56K1jotXzfbnj2So4dW7F');
+// const resend = new Resend('re_hKDM7NQH_Hpz56K1jotXzfbnj2So4dW7F');
 
 // async function main(email, userId, userPassword) {
 
@@ -56,20 +58,20 @@ const resend = new Resend('re_hKDM7NQH_Hpz56K1jotXzfbnj2So4dW7F');
 const sgMail = require('@sendgrid/mail')
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
-async function main(email, userId, userPassword){
-  const msg = {
-    to: email, // Change to your recipient
-    from: 'AuroraFortified@gmail.com', // Change to your verified sender
-    subject: 'Aurora - Forgot password request',
-    // subject: 'check',
-    text: 'and easy to do anywhere, even with Node.js',
-    html: `<b>Here are your credentials</b> <div> UserId: ${userId} </div> <div> Password: ${userPassword} </div>`,
-  }
+// async function main(email, userId, userPassword){
+//   const msg = {
+//     to: email, // Change to your recipient
+//     from: 'AuroraFortified@gmail.com', // Change to your verified sender
+//     subject: 'Aurora - Forgot password request',
+//     // subject: 'check',
+//     text: 'and easy to do anywhere, even with Node.js',
+//     html: `<b>Here are your credentials</b> <div> UserId: ${userId} </div> <div> Password: ${userPassword} </div>`,
+//   }
 
-  let response = await sgMail.send(msg);
-  console.log(response);
-  return true
-}
+//   let response = await sgMail.send(msg);
+//   console.log(response);
+//   return true
+// }
 
 async function main2(email) {
 
