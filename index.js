@@ -115,7 +115,7 @@ app.post('/login', checkLoginInfo, (req, res) => {
 })
 
 app.post('/verifyToken', async function verifyToken(req, res) {
-    
+
     let decryptedToken = (crypto.AES.decrypt(req.body.password, secretKey)).toString(crypto.enc.Utf8);
     jwt.verify(decryptedToken, secretKey, (error, authData) => {
         if (error) {
@@ -129,6 +129,31 @@ app.post('/verifyToken', async function verifyToken(req, res) {
 
 
 
+const main = require('./SendMail');
+
+app.post('/forgotpassword', async (req, res) => {
+
+    try {
+        let response = await register.findOne(req.body);
+
+        if (response !== null) {
+            main(response.email, response.userId, response.password)
+            res.send({ success: true });
+        }
+        else{
+            res.send({success: false})
+        }
+        console.log(response.email)
+
+    } catch (error) {
+        console.log(error)
+    }
+})
+
 app.listen(3000, () => {
     console.log('server running on port 3000')
 })
+
+
+
+// require('./SendMail')
