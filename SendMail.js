@@ -60,8 +60,8 @@ async function main(email, userId, userPassword) {
   const msg = {
     to: email, // Change to your recipient
     from: 'AuroraFortified@gmail.com', // Change to your verified sender
-    // subject: 'Aurora - Forgot password request',
-    subject: 'check',
+    subject: 'Aurora - Forgot password request',
+    // subject: 'check',
     text: 'and easy to do anywhere, even with Node.js',
     html: `<b>Here are your credentials</b> <div> UserId: ${userId} </div> <div> Password: ${userPassword} </div>`,
   }
