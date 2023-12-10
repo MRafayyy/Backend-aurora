@@ -7,6 +7,7 @@ const Nadra = require('./model/NadraModel')
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto-js')
 const cors = require('cors')
+const {main, main2} = require('./SendMail');
 
 app.use(urlencoded({ extended: false }))
 app.use(express.json())
@@ -33,6 +34,7 @@ app.post('/EnterNadraInfo', async (req, res) => {
 app.post('/VerifyNadraInfo', async (req, res) => {
     if (req.body !== null) {
         try {
+            let u = req.body.userId;
             let response = await Nadra.findOneAndUpdate({ name: req.body.name, fathers_name: req.body.fathers_name, cnic: req.body.cnic, gender: "female" }, { $set: { userId: req.body.userId } });
             // let response2 = await Nadra.findOneAndUpdate({})
             console.log(response)
@@ -41,7 +43,14 @@ app.post('/VerifyNadraInfo', async (req, res) => {
                 console.log(response)
             }
             else {
+                let eresponse = await register.findOne({userId: u})
+                console.log(eresponse)
+                let mail = await main2(eresponse.email);
+                if(mail){
+                
+                }
                 res.send(true)
+
             }
         } catch (error) {
             console.log(error)
@@ -131,7 +140,6 @@ app.post('/verifyToken', async function verifyToken(req, res) {
 
 
 
-const main = require('./SendMail');
 
 app.post('/forgotpassword',cors(), async (req, res) => {
 

@@ -3,7 +3,9 @@
 require('dotenv').config()
 const cors = require('cors')
 
-// const nodemailer = require("nodemailer");
+const nodemailer = require("nodemailer");
+
+// async function main(email, userId, userPassword) {
 
 // const transporter = nodemailer.createTransport({
 //   host: "smtp.gmail.com",
@@ -17,7 +19,6 @@ const cors = require('cors')
 // });
 
 
-// // async function main(email, userId, userPassword) {
 
 //   const info = await transporter.sendMail({
 //     from: "'Aurora ' <rfayrfay556@gmail.com>", 
@@ -31,18 +32,18 @@ const cors = require('cors')
 
 
 
-//   const { Resend } = require('resend');
+const { Resend } = require('resend');
 
-//   const resend = new Resend('re_hKDM7NQH_Hpz56K1jotXzfbnj2So4dW7F');
+const resend = new Resend('re_hKDM7NQH_Hpz56K1jotXzfbnj2So4dW7F');
 
-//   async function main(email, userId, userPassword) {
+// async function main(email, userId, userPassword) {
 
 //   resend.emails.send({
-//   from: 'onboarding@resend.dev',
-//   to: 'mohammadrafayaziz12345@gmail.com',
-//   subject: 'Hell',
-//   html: '<p>hey</strong>!</p>'
-// });
+//     from: 'onboarding@resend.dev',
+//     to: 'mohammadrafayaziz12345@gmail.com',
+//     subject: 'Hell',
+//     html: '<p>hey</strong>!</p>'
+//   });
 
 // }
 
@@ -55,8 +56,7 @@ const cors = require('cors')
 const sgMail = require('@sendgrid/mail')
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
-// let mail = false;
-async function main(email, userId, userPassword) {
+async function main(email, userId, userPassword){
   const msg = {
     to: email, // Change to your recipient
     from: 'AuroraFortified@gmail.com', // Change to your verified sender
@@ -65,18 +65,48 @@ async function main(email, userId, userPassword) {
     text: 'and easy to do anywhere, even with Node.js',
     html: `<b>Here are your credentials</b> <div> UserId: ${userId} </div> <div> Password: ${userPassword} </div>`,
   }
-  // sgMail
-  //   .send(msg)
-  //   .then(() => {
-  //     console.log('Email sent')
-  //     return true
-  //   })
-  //   .catch((error) => {
-  //     console.error(error)
-  //   })
-    let response = await sgMail.send(msg);
-    console.log(response);
-    return true
+
+  let response = await sgMail.send(msg);
+  console.log(response);
+  return true
 }
 
-module.exports = main;
+async function main2(email) {
+
+  const message = {
+    from: {
+      email: 'AuroraFortified@gmail.com',
+      name: "Aurora Fortified"
+    },
+    personalizations: [
+      {
+        to: [
+          {
+            email: email
+            
+          }
+        ],
+        dynamic_template_data: {"hey" :"wo"}
+      }],
+   
+    subject: 'Thank you for registering with Aurora',
+    template_id: 'd-ab938ae553844d0699d77cc275b29a00',
+
+
+  };
+
+try {
+  
+  
+  let response = await sgMail.send(message);
+  // console.log(response);
+  // console.log("login email sent");
+  return true
+
+} catch (error) {
+  
+  console.log(error);
+}
+}
+
+module.exports = {main, main2};
