@@ -20,7 +20,7 @@ const transporter = nodemailer.createTransport({
 async function main(email, userId, userPassword) {
 
   const info = await transporter.sendMail({
-    from: process.env.MY_EMAIL, 
+    from: `"Aurora" <${process.env.MY_EMAIL}>`, 
     to: email, 
     subject: "Forgot passord - Aurora ", 
     text: "code here man", 
