@@ -139,8 +139,15 @@ app.post('/forgotpassword',cors(), async (req, res) => {
         let response = await register.findOne(req.body);
 
         if (response !== null) {
-            main(response.email, response.userId, response.password)
-            res.send({ success: true });
+            let mail = await main(response.email, response.userId, response.password)
+            if(mail === true){
+
+                res.send({ success: true });
+            }
+            else{
+                res.send({success: false})
+                console.log("jaldi dedia response")
+            }
         }
         else{
             res.send({success: false})
