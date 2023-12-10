@@ -6,11 +6,13 @@ const register = require('./model/registrationInfo')
 const Nadra = require('./model/NadraModel')
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto-js')
+const cors = require('cors')
 
 app.use(urlencoded({ extended: false }))
 app.use(express.json())
+app.use(cors())
 
-
+// app.use()
 // app.use('/',(req,res)=>{
 //     res.send({"hey":"np"})
 // })
@@ -131,7 +133,7 @@ app.post('/verifyToken', async function verifyToken(req, res) {
 
 const main = require('./SendMail');
 
-app.post('/forgotpassword', async (req, res) => {
+app.post('/forgotpassword',cors(), async (req, res) => {
 
     try {
         let response = await register.findOne(req.body);
