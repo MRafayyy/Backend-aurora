@@ -35,7 +35,7 @@ app.post('/VerifyNadraInfo', async (req, res) => {
     if (req.body !== null) {
         try {
             let u = req.body.userId;
-            let response = await Nadra.findOneAndUpdate({ name: req.body.name, fathers_name: req.body.fathers_name, cnic: req.body.cnic, gender: "female" }, { $set: { userId: req.body.userId } });
+            let response = await Nadra.findOneAndUpdate({ name: req.body.name, fathers_name: req.body.fathers_name, cnic: req.body.cnic, gender: req.body.gender }, { $set: { userId: req.body.userId } }, {new: true});
             // let response2 = await Nadra.findOneAndUpdate({})
             console.log(response)
             if (response === null) {
