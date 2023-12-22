@@ -206,7 +206,7 @@ app.get('/sendFCM', async (req, res) => {
             registration_ids: dv,
             content_available: true,
             mutable_content: true,
-            notification: {
+            data: {
                 body: "This is an FCM notification message!",
                 title: "From node js",
                 imageUrl: 'https://my-cdn.com/app-logo.png',
