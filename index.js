@@ -4,10 +4,12 @@ const app = require('express')();
 require('./db/db')
 const register = require('./model/registrationInfo')
 const Nadra = require('./model/NadraModel')
+const FcmDeviceToken = require('./model/FCMToken')
+
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto-js')
 const cors = require('cors')
-const {main, main2} = require('./SendMail');
+const { main, main2 } = require('./SendMail');
 
 app.use(urlencoded({ extended: false }))
 app.use(express.json())
@@ -35,7 +37,7 @@ app.post('/VerifyNadraInfo', async (req, res) => {
     if (req.body !== null) {
         try {
             let u = req.body.userId;
-            let response = await Nadra.findOneAndUpdate({ name: req.body.name, fathers_name: req.body.fathers_name, cnic: req.body.cnic, gender: req.body.gender }, { $set: { userId: req.body.userId } }, {new: true});
+            let response = await Nadra.findOneAndUpdate({ name: req.body.name, fathers_name: req.body.fathers_name, cnic: req.body.cnic, gender: req.body.gender }, { $set: { userId: req.body.userId } }, { new: true });
             // let response2 = await Nadra.findOneAndUpdate({})
             console.log(response)
             if (response === null) {
@@ -43,11 +45,11 @@ app.post('/VerifyNadraInfo', async (req, res) => {
                 console.log(response)
             }
             else {
-                let eresponse = await register.findOne({userId: u})
+                let eresponse = await register.findOne({ userId: u })
                 console.log(eresponse)
                 let mail = await main2(eresponse.email);
-                if(mail){
-                
+                if (mail) {
+
                 }
                 res.send(true)
 
@@ -100,7 +102,7 @@ app.post('/login', checkLoginInfo, (req, res) => {
     // res.send("u can login")
     const userInfo = {
         userId: req.body.userId,
-        password: req.body.password
+        password: req.body.password,
     }
 
     try {
@@ -108,10 +110,20 @@ app.post('/login', checkLoginInfo, (req, res) => {
 
             let encryptedToken = crypto.AES.encrypt(token, secretKey).toString();
 
+            try {
 
 
+                let t1 = await FcmDeviceToken.findOne({ DeviceToken: req.body.FcmDeviceToken }) //for device token
+                if (t1 == null) {
 
-            let response = await register.findOneAndUpdate(userInfo, { $set: { Token: token } }, { new: true })
+                    let t2 = await FcmDeviceToken.create({ DeviceToken: req.body.FcmDeviceToken }) //for device token
+                }
+            } catch (error) {
+                console.log("fmc token error")
+            }
+
+
+            let response = await register.findOneAndUpdate(userInfo, { $set: { Token: token, FCMDeviceToken: req.body.FcmDeviceToken } }, { new: true })
             // let response = await register.findOneAndUpdate({userId: req.body.userId, password: req.body.password},{$set : {Token : token}},{new: true})
             // console.log(response)
             // res.send(true);
@@ -141,24 +153,24 @@ app.post('/verifyToken', async function verifyToken(req, res) {
 
 
 
-app.post('/forgotpassword',cors(), async (req, res) => {
+app.post('/forgotpassword', cors(), async (req, res) => {
 
     try {
         let response = await register.findOne(req.body);
 
         if (response !== null) {
             let mail = await main(response.email, response.userId, response.password)
-            if(mail === true){
+            if (mail === true) {
 
                 res.send({ success: true });
             }
-            else{
-                res.send({success: false})
+            else {
+                res.send({ success: false })
                 console.log("jaldi dedia response")
             }
         }
-        else{
-            res.send({success: false})
+        else {
+            res.send({ success: false })
         }
         console.log(response.email)
 
@@ -166,6 +178,50 @@ app.post('/forgotpassword',cors(), async (req, res) => {
         console.log(error)
     }
 })
+
+
+app.get('/sendFCM', async (req, res) => {
+
+    try {
+        let totalTokens = await FcmDeviceToken.find({})
+        console.log(totalTokens)
+        res.json(totalTokens)
+
+        for (let i = 0; i < totalTokens.length; i++) {
+
+            // POST https://fcm.googleapis.com/v1/projects/myproject-b5ae1/messages:send HTTP/1.1
+            let url = 'https://fcm.googleapis.com/fcm/send'
+            let response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO'
+                },
+                body: JSON.stringify({
+
+                    "data": {},
+                    "notification": {
+                        "body": "This is an FCM notification message!",
+                        "title": "FCM Message"
+                    },
+                    "to": totalTokens[i].DeviceToken,
+                }
+
+                )
+            
+            })
+        }
+            response = response.json()
+            
+        } catch (error) {
+            console.log(error)
+        }
+
+})
+
+
+
+
 
 app.listen(3000, () => {
     console.log('server running on port 3000')
