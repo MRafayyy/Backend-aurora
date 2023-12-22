@@ -206,7 +206,7 @@ app.post('/sendFCM', async (req, res) => {
             registration_ids: dv,
             content_available: true,
             mutable_content: true,
-            notification: {
+            data: {
                 body: req.body.body,
                 title: req.body.title,
                 // imageUrl: 'https://my-cdn.com/app-logo.png',
