@@ -214,11 +214,12 @@ app.post('/sendFCM', async (req, res) => {
                 sound: "mySound",
                 
             },
+            notification:{
             body: req.body.body,
                 title: req.body.title,
                 // imageUrl: 'https://my-cdn.com/app-logo.png',
                 icon: "myicon",
-                sound: "mySound",
+                sound: "mySound"}
         }, (err, response) => {
             if (err) {
                 console.log("---------------"+err)
