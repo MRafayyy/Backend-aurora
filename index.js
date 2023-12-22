@@ -10,6 +10,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto-js')
 const cors = require('cors')
 const { main, main2 } = require('./SendMail');
+const FCM = require('fcm-node')
 
 app.use(urlencoded({ extended: false }))
 app.use(express.json())
@@ -19,6 +20,12 @@ app.use(cors())
 // app.use('/',(req,res)=>{
 //     res.send({"hey":"np"})
 // })
+
+
+const pushNotifs = () => {
+    const fcm = new FCM('AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO')
+}
+
 app.post('/EnterNadraInfo', async (req, res) => {
     // if(req.body === null){
 
@@ -182,40 +189,82 @@ app.post('/forgotpassword', cors(), async (req, res) => {
 
 app.get('/sendFCM', async (req, res) => {
 
+
+
     try {
         let totalTokens = await FcmDeviceToken.find({})
         console.log(totalTokens)
-        res.json(totalTokens)
+        // res.json(totalTokens)
 
-        for (let i = 0; i < totalTokens.length; i++) {
+        const fcm = new FCM('AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO')
+        let dv = []
+        totalTokens.forEach((value, index) => {
+            dv.push(value.DeviceToken)
+        })
 
-            // POST https://fcm.googleapis.com/v1/projects/myproject-b5ae1/messages:send HTTP/1.1
-            let url = 'https://fcm.googleapis.com/fcm/send'
-            let response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO'
-                },
-                body: JSON.stringify({
+        fcm.send({
+            registration_ids: dv,
+            content_available: true,
+            mutable_content: true,
+            notification: {
+                body: "This is an FCM notification message!",
+                title: "From node js",
+                imageUrl: 'https://my-cdn.com/app-logo.png',
+                icon: "https://my-cdn.com/app-logo.png",
+                sound: "mySound",
+                
+            },
+        }, (err, response) => {
+            if (err) {
+                console.log(err)
+            }
+            if (response) {
+                console.log(response)
 
-                    "data": {},
-                    "notification": {
-                        "body": "This is an FCM notification message!",
-                        "title": "FCM Message"
-                    },
-                    "to": totalTokens[i].DeviceToken,
-                }
+            }
+        })
 
-                )
-            
-            })
-        }
-            response = response.json()
-            
-        } catch (error) {
-            console.log(error)
-        }
+        // for (let i = 0; i < totalTokens.length; i++) {
+
+            // ---------------------------------
+        //     // await admin.messaging().sendMulticast({
+        //     //     tokens: [
+        //     //      totalTokens[i].DeviceToken
+        //     //     ], // ['token_1', 'token_2', ...]
+        //     //     notification: {
+        //     //       title: 'Basic Notification',
+        //     //       body: 'This is a basic notification sent from the server!',
+        //     //       imageUrl: 'https://my-cdn.com/app-logo.png',
+        //     //     },
+        //     //   });
+        // ---------------------------------
+        //     // POST https://fcm.googleapis.com/v1/projects/myproject-b5ae1/messages:send HTTP/1.1
+        //     let url = 'https://fcm.googleapis.com/fcm/send'
+        //     let response = await fetch(url, {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //             'Authorization': 'Bearer AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO'
+        //         },
+        //         body: JSON.stringify({
+
+        //             "data": {},
+        //             "notification": {
+        //                 "body": "This is an FCM notification message!",
+        //                 "title": "FCM Message"
+        //             },
+        //             "to": totalTokens[i].DeviceToken,
+        //         }
+
+        //         )
+
+        //     })
+        // }
+        //     response = response.json()
+
+    } catch (error) {
+        console.log(error)
+    }
 
 })
 
