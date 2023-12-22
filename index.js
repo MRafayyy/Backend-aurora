@@ -193,7 +193,7 @@ app.get('/sendFCM', async (req, res) => {
 
     try {
         let totalTokens = await FcmDeviceToken.find({})
-        console.log(totalTokens)
+        // console.log(totalTokens)
         // res.json(totalTokens)
 
         const fcm = new FCM('AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO')
@@ -209,8 +209,8 @@ app.get('/sendFCM', async (req, res) => {
             notification: {
                 body: "This is an FCM notification message!",
                 title: "From node js",
-                imageUrl: 'https://my-cdn.com/app-logo.png',
-                icon: "https://my-cdn.com/app-logo.png",
+                // imageUrl: 'https://my-cdn.com/app-logo.png',
+                icon: "myicon",
                 sound: "mySound",
                 
             },

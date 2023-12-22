@@ -6,7 +6,7 @@ const registrationSchema = new Schema({
     email: String,
     password: String,
     Token: String,
-    // FCMDeviceToken: String
+    FCMDeviceToken: String
     // date: {type: Date, default: Date.now}
 })
 
