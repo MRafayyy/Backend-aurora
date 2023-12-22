@@ -206,7 +206,7 @@ app.get('/sendFCM', async (req, res) => {
             registration_ids: dv,
             content_available: true,
             mutable_content: true,
-            data: {
+            Notification: {
                 body: "This is an FCM notification message!",
                 title: "From node js",
                 imageUrl: 'https://my-cdn.com/app-logo.png',
@@ -216,7 +216,7 @@ app.get('/sendFCM', async (req, res) => {
             },
         }, (err, response) => {
             if (err) {
-                console.log(err)
+                console.log("---------------"+err)
             }
             if (response) {
                 console.log(response)
@@ -263,7 +263,7 @@ app.get('/sendFCM', async (req, res) => {
         //     response = response.json()
 
     } catch (error) {
-        console.log(error)
+        console.log("error isssssssss:"+error)
     }
 
 })
