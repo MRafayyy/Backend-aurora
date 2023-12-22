@@ -187,7 +187,7 @@ app.post('/forgotpassword', cors(), async (req, res) => {
 })
 
 
-app.get('/sendFCM', async (req, res) => {
+app.post('/sendFCM', async (req, res) => {
 
 
 
@@ -207,8 +207,8 @@ app.get('/sendFCM', async (req, res) => {
             content_available: true,
             mutable_content: true,
             notification: {
-                body: "This is an FCM notification message!",
-                title: "From node js",
+                body: req.body.body,
+                title: req.body.title,
                 // imageUrl: 'https://my-cdn.com/app-logo.png',
                 icon: "myicon",
                 sound: "mySound",
@@ -265,6 +265,7 @@ app.get('/sendFCM', async (req, res) => {
     } catch (error) {
         console.log("error isssssssss:"+error)
     }
+    res.send(true)
 
 })
 
