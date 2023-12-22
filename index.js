@@ -265,7 +265,7 @@ app.post('/sendFCM', async (req, res) => {
     } catch (error) {
         console.log("error isssssssss:"+error)
     }
-    res.send(true)
+    // res.send(true)
 
 })
 
