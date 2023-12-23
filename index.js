@@ -206,14 +206,14 @@ app.post('/sendFCM', async (req, res) => {
             registration_ids: dv,
             content_available: true,
             mutable_content: true,
-            data: {
-                body: req.body.body,
-                title: req.body.title,
-                // imageUrl: 'https://my-cdn.com/app-logo.png',
-                icon: "myicon",
-                sound: "mySound",
+            // data: {
+            //     body: req.body.body,
+            //     title: req.body.title,
+            //     // imageUrl: 'https://my-cdn.com/app-logo.png',
+            //     icon: "myicon",
+            //     sound: "mySound",
                 
-            },
+            // },
             notification: {
                 body: req.body.body,
                 title: req.body.title,
