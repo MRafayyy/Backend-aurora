@@ -94,6 +94,7 @@ const checkLoginInfo = async (req, res, next) => {
             // res.send("login credentials did not match")
             res.send({ success: false, reason: 'Login credentials did not match' })
             // console.log(response)
+            return
         }
         else {
             next();
