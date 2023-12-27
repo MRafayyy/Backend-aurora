@@ -136,7 +136,7 @@ app.post('/login', checkLoginInfo, (req, res) => {
             // res.send(true);
 
             if (response !== null) {
-                res.send({ success: true, token: encryptedToken });
+                res.json({ success: true, token: encryptedToken });
             }
         })
     } catch (error) {
