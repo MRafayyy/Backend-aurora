@@ -71,9 +71,8 @@ app.post('/register', async (req, res) => {
     const obj1 = req.body;
     console.log(obj1);
     try {
-        let response2 = await register.findOne(obj1);
+        let response2 = await register.find({$or: [{userId: obj1.userId}, {email: obj1.email}] });
         if (response2 === null) {
-
             let response = await register.insertMany(obj1)
             res.send(true);
         }
@@ -127,6 +126,7 @@ app.post('/login', checkLoginInfo, (req, res) => {
                     let t2 = await FcmDeviceToken.create({ DeviceToken: req.body.FcmDeviceToken }) //for device token
                 }
             } catch (error) {
+                res.json({ success: "FCMTokenError", reason: error });
                 console.log("fmc token error")
             }
 
@@ -141,6 +141,7 @@ app.post('/login', checkLoginInfo, (req, res) => {
             }
         })
     } catch (error) {
+        res.json({ success: "SomeError", reason: error });
         console.log(error)
     }
 })
