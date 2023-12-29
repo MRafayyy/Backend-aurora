@@ -1,6 +1,10 @@
 const { urlencoded } = require('express');
 const express = require('express')
 const app = require('express')();
+const http = require('http').Server(app)
+const io = require('socket.io')(http);
+
+
 require('./db/db')
 const register = require('./model/registrationInfo')
 const Nadra = require('./model/NadraModel')
@@ -10,7 +14,8 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto-js')
 const cors = require('cors')
 const { main, main2 } = require('./SendMail');
-const FCM = require('fcm-node')
+const FCM = require('fcm-node');
+// const { Socket } = require('socket.io');
 
 app.use(urlencoded({ extended: false }))
 app.use(express.json())
@@ -21,6 +26,16 @@ app.use(cors())
 //     res.send({"hey":"np"})
 // })
 
+
+const usp = io.of('/userrr')
+
+usp.on('connection', (socket) => {
+    console.log("a user connected")
+
+    socket.on('disconnect', () => {
+        console.log("a user disconnected")
+    })
+})
 
 const pushNotifs = () => {
     const fcm = new FCM('AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO')
@@ -71,7 +86,7 @@ app.post('/register', async (req, res) => {
     const obj1 = req.body;
     console.log(obj1);
     try {
-        let response2 = await register.find({$or: [{userId: obj1.userId}, {email: obj1.email}] });
+        let response2 = await register.find({ $or: [{ userId: obj1.userId }, { email: obj1.email }] });
         if (response2 === null) {
             let response = await register.insertMany(obj1)
             res.send(true);
@@ -214,7 +229,7 @@ app.post('/sendFCM', async (req, res) => {
             //     // imageUrl: 'https://my-cdn.com/app-logo.png',
             //     icon: "myicon",
             //     sound: "mySound",
-                
+
             // },
             notification: {
                 body: req.body.body,
@@ -222,11 +237,11 @@ app.post('/sendFCM', async (req, res) => {
                 // imageUrl: 'https://my-cdn.com/app-logo.png',
                 icon: "myicon",
                 sound: "mySound",
-                
+
             }
         }, (err, response) => {
             if (err) {
-                console.log("---------------"+err)
+                console.log("---------------" + err)
             }
             if (response) {
                 console.log(response)
@@ -236,7 +251,7 @@ app.post('/sendFCM', async (req, res) => {
 
         // for (let i = 0; i < totalTokens.length; i++) {
 
-            // ---------------------------------
+        // ---------------------------------
         //     // await admin.messaging().sendMulticast({
         //     //     tokens: [
         //     //      totalTokens[i].DeviceToken
@@ -273,7 +288,7 @@ app.post('/sendFCM', async (req, res) => {
         //     response = response.json()
 
     } catch (error) {
-        console.log("error isssssssss:"+error)
+        console.log("error isssssssss:" + error)
     }
     // res.send(true)
 
@@ -283,7 +298,7 @@ app.post('/sendFCM', async (req, res) => {
 
 
 
-app.listen(3000, () => {
+http.listen(3000, () => {
     console.log('server running on port 3000')
 })
 
