@@ -1,8 +1,12 @@
 const { urlencoded } = require('express');
 const express = require('express')
 const app = require('express')();
-const http = require('http').Server(app)
-const io = require('socket.io')(http);
+// const http = require('http').Server(app)
+// const io = require('socket.io')(http);
+const Pusher = require("pusher");
+
+const Ably = require('ably');
+
 
 
 require('./db/db')
@@ -27,16 +31,67 @@ app.use(cors())
 // })
 
 
-const usp = io.of('/userrr')
+// const usp = io.of('/userrr')
 
-usp.on('connection', (socket) => {
-    console.log("a user connected")
+// usp.on('connection', (socket) => {
+//     console.log("a user connected")
 
-    socket.on('disconnect', () => {
-        console.log("a user disconnected")
-    })
-})
+//     socket.on('disconnect', () => {
+//         console.log("a user disconnected")
+//     })
+// })
 
+// ---------------------------------------------------------------------------------------
+const ably_api_key = 'uJbUAQ.WtYOKg:hFNNjiNKqYkls6docSNQIVfusAl1c-hy7O6pMHu6Cac'
+
+async function able(){
+
+    const ably = new Ably.Realtime.Promise(ably_api_key);
+    await ably.connection.once('connected');
+    console.log('Connected to Ably!');
+
+    const channel = ably.channels.get('quickstartedd');
+
+    await channel.subscribe('greeting', (message) => {
+      console.log('Received realtime: ' + message.data)
+    });
+
+    const presenceMessage = await channel.presence.get();
+  console.log(presenceMessage);
+
+//   channel.presence.get(function (err, presenceSet) {
+//     presenceSet; // array of PresenceMessages
+//   });
+}
+// able()
+
+
+
+// const pusher = new Pusher({
+//     appId: "1731751",
+//     key: "5441fc042a55775fd4dc",
+//     secret: "87ed05e05e94e8b2ffbd",
+//     cluster: "ap2",
+//     useTLS: true
+//   });
+  
+//   pusher.trigger("my-channelrrrr", "my-eventrrrr", {
+//     message: "hello world"
+//   })
+
+
+//   async function haa() {
+    
+//     await pusher.subscribe({
+//       channelName: "presence-f23", 
+//       onEvent: (event) => {
+//         console.log(`Event received: ${event}`);
+//       }
+//     });
+// }
+// haa()
+
+  
 const pushNotifs = () => {
     const fcm = new FCM('AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO')
 }
@@ -298,7 +353,7 @@ app.post('/sendFCM', async (req, res) => {
 
 
 
-http.listen(3000, () => {
+app.listen(3000, () => {
     console.log('server running on port 3000')
 })
 
