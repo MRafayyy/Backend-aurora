@@ -1,11 +1,13 @@
 const { urlencoded } = require('express');
 const express = require('express')
 const app = require('express')();
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+const httpServer = createServer(app);
+const io = new Server(httpServer, { /* options */ });
+
 // const http = require('http').Server(app)
 // const io = require('socket.io')(http);
-const Pusher = require("pusher");
-
-const Ably = require('ably');
 
 
 
@@ -31,67 +33,70 @@ app.use(cors())
 // })
 
 
-// const usp = io.of('/userrr')
+const usp = io.of('/auro')
 
-// usp.on('connection', (socket) => {
-//     console.log("a user connected")
+let count = 0;
+usp.on('connection', async (socket) => {
+    console.log("a user connected")
+    console.log(socket.handshake.auth.Token)
+    const userId = socket.handshake.auth.Token
+    await register.findOneAndUpdate({ userId: userId }, { $set: { is_online: '1' } })
+    count = count + 1;
+    socket.broadcast.emit('getOnlineUsers', { userId: userId, count: count })
 
-//     socket.on('disconnect', () => {
-//         console.log("a user disconnected")
-//     })
-// })
+    socket.on('disconnect', async () => {
+        console.log("a user disconnected")
+        await register.findOneAndUpdate({ userId: userId }, { $set: { is_online: '0' } })
+        count = count - 1;
+        socket.broadcast.emit('getOfflineUsers', { userId: userId, count: count })
+    })
+})
 
 // ---------------------------------------------------------------------------------------
-const ably_api_key = 'uJbUAQ.WtYOKg:hFNNjiNKqYkls6docSNQIVfusAl1c-hy7O6pMHu6Cac'
 
-async function able(){
 
-    const ably = new Ably.Realtime.Promise(ably_api_key);
-    await ably.connection.once('connected');
-    console.log('Connected to Ably!');
-
-    const channel = ably.channels.get('quickstartedd');
-
-    await channel.subscribe('greeting', (message) => {
-      console.log('Received realtime: ' + message.data)
-    });
-
-    const presenceMessage = await channel.presence.get();
-  console.log(presenceMessage);
-
-//   channel.presence.get(function (err, presenceSet) {
-//     presenceSet; // array of PresenceMessages
-//   });
-}
-// able()
+app.get('/users/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        let response = await register.find({ userId: { $ne: userId } })
+        res.status(200).json(response)
+    } catch (error) {
+        res.status(500).json("Error retrieving users")
+        console.log(error)
+    }
+})
 
 
 
-// const pusher = new Pusher({
-//     appId: "1731751",
-//     key: "5441fc042a55775fd4dc",
-//     secret: "87ed05e05e94e8b2ffbd",
-//     cluster: "ap2",
-//     useTLS: true
-//   });
-  
-//   pusher.trigger("my-channelrrrr", "my-eventrrrr", {
-//     message: "hello world"
-//   })
+app.post('/friend-Request', async (req, res) => {
+    const { currentUserId, selectedUserId } = req.body
+    try {
+        await register.findOneAndUpdate({ userId: selectedUserId }, { $push: { friendRequests: currentUserId } })
+        
+        await register.findOneAndUpdate({ userId: currentUserId }, { $push: { sentfriendRequests: selectedUserId } })
+   
+        res.sendStatus(200)
+    } catch (error) {
+        res.status(500).send("error sending request")
+    }
+})
 
 
-//   async function haa() {
-    
-//     await pusher.subscribe({
-//       channelName: "presence-f23", 
-//       onEvent: (event) => {
-//         console.log(`Event received: ${event}`);
-//       }
-//     });
-// }
-// haa()
+app.get('/friend-request/:userId',async(req,res)=>{
+    try {
+        let user = await register.findOne({userId: req.params.userId}).populate("friendRequests", "name email").lean()
+        
+        const friendRequests = user.friendRequests;
+        
+        res.status(200).json(friendRequests)
+        
+    } catch (error) {
+        res.status(500).send("error fetching friend request")
+        
+    }
+})
 
-  
+
 const pushNotifs = () => {
     const fcm = new FCM('AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO')
 }
@@ -110,15 +115,30 @@ app.post('/EnterNadraInfo', async (req, res) => {
     // }
 })
 
+app.get('/do',async(req,res)=>{
+    try {
+        
+        let response = await Nadra.find({})
+        
+        response.forEach(async(value, index)=>{
+            let response2 = await register.findOneAndUpdate({userId: value.userId}, {$set : {name: value.name}})
+        })
+        res.status(200).json({message: "done"}) 
+        
+    } catch (error) {
+      res.status(500).json({message: "oops"}) 
+    }
+})
+
 app.post('/VerifyNadraInfo', async (req, res) => {
     if (req.body !== null) {
         try {
             let u = req.body.userId;
             let response = await Nadra.findOneAndUpdate({ name: req.body.name, fathers_name: req.body.fathers_name, cnic: req.body.cnic, gender: req.body.gender }, { $set: { userId: req.body.userId } }, { new: true });
-            // let response2 = await Nadra.findOneAndUpdate({})
+            let response2 = await register.findOneAndUpdate({userId},{$set: {name: req.body.userId}})
             console.log(response)
             if (response === null) {
-                res.send(false)
+                res.status(500).send(false)
                 console.log(response)
             }
             else {
@@ -128,7 +148,7 @@ app.post('/VerifyNadraInfo', async (req, res) => {
                 if (mail) {
 
                 }
-                res.send(true)
+                res.status(200).send(true)
 
             }
         } catch (error) {
@@ -353,7 +373,7 @@ app.post('/sendFCM', async (req, res) => {
 
 
 
-app.listen(3000, () => {
+httpServer.listen(3000, () => {
     console.log('server running on port 3000')
 })
 
