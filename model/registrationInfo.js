@@ -1,16 +1,35 @@
 const mongoose = require('mongoose');
-const {Schema} = mongoose;
+const { Schema } = mongoose;
 
 const registrationSchema = new Schema({
     name: String,
-    userId: String, 
+    userId: {
+        type: String,
+        unique: true
+    },
     email: String,
     password: String,
     Token: String,
     FCMDeviceToken: String,
     is_online: String,
-    friendRequests: Array,
-    sentfriendRequests: Array
+    friendRequests: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "register"
+        }
+    ],
+    friends: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "register"
+        }
+    ],
+    sentfriendRequests: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "register"
+        }
+    ],
     // date: {type: Date, default: Date.now}
 })
 
