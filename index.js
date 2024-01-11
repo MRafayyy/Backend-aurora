@@ -71,9 +71,9 @@ app.get('/users/:userId', async (req, res) => {
 app.post('/friend-Request', async (req, res) => {
     const { currentUserId, selectedUserId } = req.body
     try {
-        await register.findOneAndUpdate({ userId: selectedUserId }, { $push: { friendRequests: currentUserId } })
+        await register.findByIdAndUpdate(selectedUserId, { $push: { friendRequests: currentUserId } })
         
-        await register.findOneAndUpdate({ userId: currentUserId }, { $push: { sentfriendRequests: selectedUserId } })
+        await register.findByIdAndUpdate(currentUserId, { $push: { sentfriendRequests: selectedUserId } })
    
         res.sendStatus(200)
     } catch (error) {
@@ -82,9 +82,10 @@ app.post('/friend-Request', async (req, res) => {
 })
 
 
-app.get('/friend-request/:userId',async(req,res)=>{
+app.get('/friend-request/:mongoId',async(req,res)=>{
     try {
-        let user = await register.findOne({userId: req.params.userId}).populate("friendRequests", "name email").lean()
+        const {mongoId} = req.params
+        const user = await register.findById(mongoId).populate("friendRequests", "name email").lean()
         
         const friendRequests = user.friendRequests;
         
@@ -227,7 +228,7 @@ app.post('/login', checkLoginInfo, (req, res) => {
             // res.send(true);
 
             if (response !== null) {
-                res.json({ success: true, token: encryptedToken });
+                res.json({ success: true, token: encryptedToken, mongoId: response._id });
             }
         })
     } catch (error) {
