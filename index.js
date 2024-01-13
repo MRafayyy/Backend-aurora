@@ -87,9 +87,17 @@ app.get('/friend-request/:mongoId',async(req,res)=>{
         const {mongoId} = req.params
         const user = await register.findById(mongoId).populate("friendRequests", "name email").lean()
         
-        const friendRequests = user.friendRequests;
+        if(user.friendRequests == undefined){
+            res.status(200).send({status: "empty"})
+        }
+        else{
+            const friendRequests = user.friendRequests;
+            
+            res.status(200).json(friendRequests)
+            
+        }
+    
         
-        res.status(200).json(friendRequests)
         
     } catch (error) {
         res.status(500).send("error fetching friend request")
