@@ -72,9 +72,9 @@ app.post('/friend-Request', async (req, res) => {
     const { currentUserId, selectedUserId } = req.body
     try {
         await register.findByIdAndUpdate(selectedUserId, { $push: { friendRequests: currentUserId } })
-        
+
         await register.findByIdAndUpdate(currentUserId, { $push: { sentfriendRequests: selectedUserId } })
-   
+
         res.sendStatus(200)
     } catch (error) {
         res.status(500).send("error sending request")
@@ -82,26 +82,59 @@ app.post('/friend-Request', async (req, res) => {
 })
 
 
-app.get('/friend-request/:mongoId',async(req,res)=>{
+app.get('/friend-request/:mongoId', async (req, res) => {
     try {
-        const {mongoId} = req.params
+        const { mongoId } = req.params
         const user = await register.findById(mongoId).populate("friendRequests", "name email").lean()
-        
-        if(user.friendRequests == undefined){
-            res.status(200).send({status: "empty"})
+
+        if (user.friendRequests == undefined) {
+            res.status(200).send({ status: "empty" })
         }
-        else{
+        else {
             const friendRequests = user.friendRequests;
-            
+
             res.status(200).json(friendRequests)
-            
+
         }
-    
-        
-        
+
+
+
     } catch (error) {
         res.status(500).send("error fetching friend request")
-        
+
+    }
+})
+
+
+app.post('/friend-request/accept', async (req, res) => {
+    const { senderId, recepientId } = req.body
+
+    try {
+
+        // retrieve the documents of sender and recepient 
+        const sender = await register.findById(senderId)
+        const recepient = await register.findById(recepientId)
+
+        sender.friends.push(recepientId)
+        recepient.friends.push(senderId)
+
+        sender.sentfriendRequests = sender.sentfriendRequests.filter((requestId) => {
+            return requestId.toString() !== recepientId.toString()
+        })
+
+        recepient.friendRequests = recepient.friendRequests.filter((requestId) => {
+            return requestId.toString() !== senderId.toString()
+        })
+
+        await sender.save()
+        await recepient.save()
+
+
+        res.status(200).json({ message: "Friend request accepted successfully" })
+
+    } catch (error) {
+        res.status(500).json({ message: "Internal Server Error" })
+
     }
 })
 
@@ -124,18 +157,18 @@ app.post('/EnterNadraInfo', async (req, res) => {
     // }
 })
 
-app.get('/do',async(req,res)=>{
+app.get('/do', async (req, res) => {
     try {
-        
+
         let response = await Nadra.find({})
-        
-        response.forEach(async(value, index)=>{
-            let response2 = await register.findOneAndUpdate({userId: value.userId}, {$set : {name: value.name}})
+
+        response.forEach(async (value, index) => {
+            let response2 = await register.findOneAndUpdate({ userId: value.userId }, { $set: { name: value.name } })
         })
-        res.status(200).json({message: "done"}) 
-        
+        res.status(200).json({ message: "done" })
+
     } catch (error) {
-      res.status(500).json({message: "oops"}) 
+        res.status(500).json({ message: "oops" })
     }
 })
 
@@ -144,7 +177,7 @@ app.post('/VerifyNadraInfo', async (req, res) => {
         try {
             let u = req.body.userId;
             let response = await Nadra.findOneAndUpdate({ name: req.body.name, fathers_name: req.body.fathers_name, cnic: req.body.cnic, gender: req.body.gender }, { $set: { userId: req.body.userId } }, { new: true });
-            let response2 = await register.findOneAndUpdate({userId},{$set: {name: req.body.userId}})
+            let response2 = await register.findOneAndUpdate({ userId }, { $set: { name: req.body.userId } })
             console.log(response)
             if (response === null) {
                 res.status(500).send(false)
