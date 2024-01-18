@@ -171,11 +171,12 @@ app.post('/register', async (req, res) => {
     console.log(obj1);
     try {
         let response2 = await register.find({ $or: [{ userId: obj1.userId }, { email: obj1.email }] });
-        if (response2 === null) {
+        if (response2.length===0) {
             let response = await register.insertMany(obj1)
             res.send(true);
         }
         else {
+            console.log("what "+response2)
             res.send(false)
         }
     } catch (error) {
