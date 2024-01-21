@@ -157,15 +157,19 @@ app.post('/EnterNadraInfo', async (req, res) => {
     // }
 })
 
-app.get('/do', async (req, res) => {
+app.put('/do', async (req, res) => {
     try {
 
-        let response = await Nadra.find({})
+        // let response = await Nadra.find({})
 
-        response.forEach(async (value, index) => {
-            let response2 = await register.findOneAndUpdate({ userId: value.userId }, { $set: { name: value.name } })
-        })
-        res.status(200).json({ message: "done" })
+        // response.forEach(async (value, index) => {
+        //     // let response2 = await register.findOneAndUpdate({ userId: value.userId }, { $set: { name: value.name } })
+        //     let response2 = await register.findOneAndUpdate({ userId: value.userId }, { $set: { name: value.name } })
+        // })
+
+let response = await register.updateMany({}, {$set:{nadra_verified:1}})
+
+        res.status(200).json({ message: "done", updatedCount: response.nModified })
 
     } catch (error) {
         res.status(500).json({ message: "oops" })
@@ -176,7 +180,7 @@ app.post('/VerifyNadraInfo', async (req, res) => {
     if (req.body !== null) {
         try {
             let u = req.body.userId;
-            let response = await Nadra.findOneAndUpdate({ name: req.body.name, fathers_name: req.body.fathers_name, cnic: req.body.cnic, gender: req.body.gender }, { $set: { userId: req.body.userId } }, { new: true });
+            let response = await Nadra.findOneAndUpdate({ name: req.body.name, fathers_name: req.body.fathers_name, cnic: req.body.cnic, gender: req.body.gender }, { $set: { userId: req.body.userId, nadra_verified:1 } }, { new: true });
             let response2 = await register.findOneAndUpdate({ userId }, { $set: { name: req.body.userId } })
             console.log(response)
             if (response === null) {
@@ -228,14 +232,19 @@ const checkLoginInfo = async (req, res, next) => {
             // console.log(response)
             return
         }
-        else {
-            next();
+        if (response.nadra_verified !== 1) {
+            res.send({ success: false, reason: 'User not verified by Nadra' });
+            return;
         }
+        // else {
+            next();
+        // }
     } catch (error) {
         console.log(error)
         // res.send("login credentials did not match")
     }
 }
+
 const secretKey = "hey";
 
 app.post('/login', checkLoginInfo, (req, res) => {

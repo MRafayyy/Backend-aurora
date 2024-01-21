@@ -12,6 +12,7 @@ const registrationSchema = new Schema({
     Token: String,
     FCMDeviceToken: String,
     is_online: String,
+    nadra_verified: Number,
     friendRequests: [
         {
             type: mongoose.Schema.Types.ObjectId,
