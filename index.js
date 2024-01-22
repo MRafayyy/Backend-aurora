@@ -5,6 +5,7 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const httpServer = createServer(app);
 const io = new Server(httpServer, { /* options */ });
+const mongoose = require('mongoose')
 
 // const http = require('http').Server(app)
 // const io = require('socket.io')(http);
@@ -15,6 +16,7 @@ require('./db/db')
 const register = require('./model/registrationInfo')
 const Nadra = require('./model/NadraModel')
 const FcmDeviceToken = require('./model/FCMToken')
+const Admin = require('./model/AdminInfo')
 
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto-js')
@@ -55,16 +57,51 @@ usp.on('connection', async (socket) => {
 // ---------------------------------------------------------------------------------------
 
 
-app.get('/users/:userId', async (req, res) => {
+// app.get('/users/:userId', async (req, res) => {
+//     try {
+//         const userId = req.params.userId;
+//         const recepient = await register.find({})
+//         let users = await register.find({ userId: { $ne: userId } })
+
+// users = users.filter((usersId)=>{
+
+// })
+//         res.status(200).json(users)
+//     } catch (error) {
+//         res.status(500).json("Error retrieving users")
+//         console.log(error)
+//     }
+// })
+
+
+app.get('/users/:mongoId', async (req, res) => {
     try {
-        const userId = req.params.userId;
-        let response = await register.find({ userId: { $ne: userId } })
-        res.status(200).json(response)
+        const { mongoId } = req.params;
+
+        // Get the current user's friend list
+        const currentUser = await register.findById(mongoId).populate('friends', 'name _id userId').lean();
+        console.log(currentUser)
+        console.log("------------------")
+        console.log(currentUser.friends)
+        // if(currentUser.friends.length!==0){
+        console.log("------------------")
+
+        const currentUserFriends = currentUser.friends.map(friend => friend.userId);
+        console.log(currentUserFriends)
+
+        // Find users who are not friends with the current user
+        const users = await register.find({ userId: { $nin: currentUserFriends }, _id: { $ne: mongoId } });
+        // }
+        // else{
+        // const users = await register.find({ _id: { $ne: mongoId } })
+        // }
+
+        res.status(200).json(users);
     } catch (error) {
-        res.status(500).json("Error retrieving users")
-        console.log(error)
+        console.error(error);
+        res.status(500).json({ error: "Error retrieving users" });
     }
-})
+});
 
 
 
@@ -167,7 +204,7 @@ app.put('/do', async (req, res) => {
         //     let response2 = await register.findOneAndUpdate({ userId: value.userId }, { $set: { name: value.name } })
         // })
 
-let response = await register.updateMany({}, {$set:{nadra_verified:1}})
+        let response = await register.updateMany({}, { $set: { nadra_verified: 1 } })
 
         res.status(200).json({ message: "done", updatedCount: response.nModified })
 
@@ -180,7 +217,7 @@ app.post('/VerifyNadraInfo', async (req, res) => {
     if (req.body !== null) {
         try {
             let u = req.body.userId;
-            let response = await Nadra.findOneAndUpdate({ name: req.body.name, fathers_name: req.body.fathers_name, cnic: req.body.cnic, gender: req.body.gender }, { $set: { userId: req.body.userId, nadra_verified:1 } }, { new: true });
+            let response = await Nadra.findOneAndUpdate({ name: req.body.name, fathers_name: req.body.fathers_name, cnic: req.body.cnic, gender: req.body.gender }, { $set: { userId: req.body.userId, nadra_verified: 1 } }, { new: true });
             let response2 = await register.findOneAndUpdate({ userId }, { $set: { name: req.body.userId } })
             console.log(response)
             if (response === null) {
@@ -208,12 +245,12 @@ app.post('/register', async (req, res) => {
     console.log(obj1);
     try {
         let response2 = await register.find({ $or: [{ userId: obj1.userId }, { email: obj1.email }] });
-        if (response2.length===0) {
+        if (response2.length === 0) {
             let response = await register.insertMany(obj1)
             res.send(true);
         }
         else {
-            console.log("what "+response2)
+            console.log("what " + response2)
             res.send(false)
         }
     } catch (error) {
@@ -237,7 +274,7 @@ const checkLoginInfo = async (req, res, next) => {
             return;
         }
         // else {
-            next();
+        next();
         // }
     } catch (error) {
         console.log(error)
@@ -420,6 +457,100 @@ app.post('/sendFCM', async (req, res) => {
     // res.send(true)
 
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.post('/admin/register', async (req, res) => {
+    // const obj = {
+    //     adminId: req.body.adminId,
+    //     password: req.body.password
+    // }
+    const obj = req.body
+    try {
+        let response = await Admin.insertMany(obj)
+        res.send(true);
+
+    } catch (error) {
+        console.log(error)
+        res.send(false)
+    }
+})
+
+
+const checkAdminLoginInfo = async (req, res, next) => {
+    try {
+        console.log(req.body.adminId);
+        console.log(req.body.password);
+        let response = await Admin.findOne({ adminId: req.body.adminId, password: req.body.password })
+        if (response === null) {
+            res.send({ success: false, reason: 'Login credentials did not match' })
+            return
+        }
+
+        //    else
+
+        res.send({ success: true })
+        // next();
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+// const secretKey = "hey";
+
+app.post('/admin/login', checkAdminLoginInfo, (req, res) => {
+
+    const adminInfo = {
+        userId: req.body.userId,
+        password: req.body.password,
+    }
+
+    // try {
+    //     jwt.sign({ userInfo }, secretKey, { expiresIn: '100000s' }, async (err, token) => {
+
+    //         let encryptedToken = crypto.AES.encrypt(token, secretKey).toString();
+
+    //         try {
+
+
+    //             let t1 = await FcmDeviceToken.findOne({ DeviceToken: req.body.FcmDeviceToken }) //for device token
+    //             if (t1 == null) {
+
+    //                 let t2 = await FcmDeviceToken.create({ DeviceToken: req.body.FcmDeviceToken }) //for device token
+    //             }
+    //         } catch (error) {
+    //             res.json({ success: "FCMTokenError", reason: error });
+    //             console.log("fmc token error")
+    //         }
+
+
+    //         let response = await register.findOneAndUpdate(userInfo, { $set: { Token: token, FCMDeviceToken: req.body.FcmDeviceToken } }, { new: true })
+    //         // let response = await register.findOneAndUpdate({userId: req.body.userId, password: req.body.password},{$set : {Token : token}},{new: true})
+    //         // console.log(response)
+    //         // res.send(true);
+
+    //         if (response !== null) {
+    //             res.json({ success: true, token: encryptedToken, mongoId: response._id });
+    //         }
+    //     })
+    // } catch (error) {
+    //     res.json({ success: "SomeError", reason: error });
+    //     console.log(error)
+    // }
+})
+
 
 
 
