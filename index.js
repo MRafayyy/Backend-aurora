@@ -77,20 +77,27 @@ usp.on('connection', async (socket) => {
 app.get('/users/:mongoId', async (req, res) => {
     try {
         const { mongoId } = req.params;
-
+let users;
         // Get the current user's friend list
-        const currentUser = await register.findById(mongoId).populate('friends', 'name _id userId').lean();
-        console.log(currentUser)
-        console.log("------------------")
+        if(await register.findById(mongoId).friends !== undefined) {
+
+            const currentUser = await register.findById(mongoId).populate('friends', 'name _id userId').lean();
+            console.log(currentUser)
+            console.log("------------------")
         console.log(currentUser.friends)
         // if(currentUser.friends.length!==0){
         console.log("------------------")
 
         const currentUserFriends = currentUser.friends.map(friend => friend.userId);
         console.log(currentUserFriends)
-
+        
         // Find users who are not friends with the current user
-        const users = await register.find({ userId: { $nin: currentUserFriends }, _id: { $ne: mongoId } });
+         users = await register.find({ userId: { $nin: currentUserFriends }, _id: { $ne: mongoId } });
+    }
+    else{
+         users = await register.find({ _id: { $ne: mongoId } });
+
+    }
         // }
         // else{
         // const users = await register.find({ _id: { $ne: mongoId } })
