@@ -17,6 +17,7 @@ const register = require('./model/registrationInfo')
 const Nadra = require('./model/NadraModel')
 const FcmDeviceToken = require('./model/FCMToken')
 const Admin = require('./model/AdminInfo')
+const adminNotifications = require('./model/Notifications')
 
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto-js')
@@ -77,27 +78,25 @@ usp.on('connection', async (socket) => {
 app.get('/users/:mongoId', async (req, res) => {
     try {
         const { mongoId } = req.params;
-let users;
+        let users;
         // Get the current user's friend list
-        if(await register.findById(mongoId).friends !== undefined) {
+        if (await register.findById(mongoId).friends !== undefined) {
 
             const currentUser = await register.findById(mongoId).populate('friends', 'name _id userId').lean();
             console.log(currentUser)
-            console.log("------------------")
-        console.log(currentUser.friends)
-        // if(currentUser.friends.length!==0){
-        console.log("------------------")
+      
+            console.log(currentUser.friends)
 
-        const currentUserFriends = currentUser.friends.map(friend => friend.userId);
-        console.log(currentUserFriends)
-        
-        // Find users who are not friends with the current user
-         users = await register.find({ userId: { $nin: currentUserFriends }, _id: { $ne: mongoId } });
-    }
-    else{
-         users = await register.find({ _id: { $ne: mongoId } });
+            const currentUserFriends = currentUser.friends.map(friend => friend.userId);
+            console.log(currentUserFriends)
 
-    }
+            // Find users who are not friends with the current user
+            users = await register.find({ userId: { $nin: currentUserFriends }, _id: { $ne: mongoId } });
+        }
+        else {
+            users = await register.find({ _id: { $ne: mongoId } });
+
+        }
         // }
         // else{
         // const users = await register.find({ _id: { $ne: mongoId } })
@@ -389,6 +388,8 @@ app.post('/sendFCM', async (req, res) => {
         totalTokens.forEach((value, index) => {
             dv.push(value.DeviceToken)
         })
+        const currentDate = new Date();
+        await adminNotifications.insertMany({   date: currentDate.toISOString().split('T')[0],time: currentDate.toLocaleTimeString([], { hour12: true }),title: req.body.title, body: req.body.body})
 
         fcm.send({
             registration_ids: dv,
@@ -465,6 +466,16 @@ app.post('/sendFCM', async (req, res) => {
 
 })
 
+
+
+app.get('/get-notifs',async(req,res)=>{
+    try {
+        let response = await adminNotifications.find({})
+        res.status(200).send(response)
+    } catch (error) {
+        res.status(404).json({status: "failed"})
+    }
+})
 
 
 
