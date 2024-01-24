@@ -389,7 +389,10 @@ app.post('/sendFCM', async (req, res) => {
             dv.push(value.DeviceToken)
         })
         const currentDate = new Date();
-        await adminNotifications.insertMany({   date: currentDate.toISOString().split('T')[0],time: currentDate.toLocaleTimeString([], { hour12: true }),title: req.body.title, body: req.body.body})
+        const hours = currentDate.getHours();
+        const minutes = currentDate.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        await adminNotifications.insertMany({   date: currentDate.toISOString().split('T')[0],   time: `${hours % 12}:${minutes < 10 ? '0' : ''}${minutes} ${ampm}`,title: req.body.title, body: req.body.body})
 
         fcm.send({
             registration_ids: dv,
