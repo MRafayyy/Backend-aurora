@@ -6,6 +6,7 @@ const { Server } = require("socket.io");
 const httpServer = createServer(app);
 const io = new Server(httpServer, { /* options */ });
 const mongoose = require('mongoose')
+const moment = require('moment-timezone');
 
 // const http = require('http').Server(app)
 // const io = require('socket.io')(http);
@@ -388,9 +389,10 @@ app.post('/sendFCM', async (req, res) => {
         totalTokens.forEach((value, index) => {
             dv.push(value.DeviceToken)
         })
-        const currentDate = new Date();
-        const hours = currentDate.getHours();
-        const minutes = currentDate.getMinutes();
+        const currentDate = moment().tz('Asia/Karachi')
+        console.log(currentDate)
+        const hours = currentDate.hours();
+        const minutes = currentDate.minutes();
         const ampm = hours >= 12 ? 'PM' : 'AM';
         await adminNotifications.insertMany({   date: currentDate.toISOString().split('T')[0],   time: `${hours % 12}:${minutes < 10 ? '0' : ''}${minutes} ${ampm}`,title: req.body.title, body: req.body.body})
 
