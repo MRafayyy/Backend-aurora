@@ -575,6 +575,23 @@ app.post('/admin/login', checkAdminLoginInfo, (req, res) => {
 })
 
 
+app.post('/save-download-url/:mongoId',async(req,res)=>{
+    const downloadUrl = req.body.downloadUrl;
+    console.log(downloadUrl)
+    try {
+        const user = await register.findById(req.params.mongoId)
+        // console.log(user)
+        user.rescue_video_download_urls.push({download_link:downloadUrl})
+        await user.save();
+        res.status(200).json({success:true})
+
+    } catch (error) {
+        res.status(500).json({success: false, error: error.msg})
+        console.log(error)
+    }
+})
+
+
 
 
 

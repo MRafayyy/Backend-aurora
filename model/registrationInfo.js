@@ -13,6 +13,12 @@ const registrationSchema = new Schema({
     FCMDeviceToken: String,
     is_online: String,
     nadra_verified: Number,
+    rescue_video_download_urls: [
+        {
+            download_link: String,
+            date: {type: Date, default: Date.now}
+        }
+    ],
     friendRequests: [
         {
             type: mongoose.Schema.Types.ObjectId,
