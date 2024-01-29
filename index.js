@@ -81,29 +81,81 @@ app.get('/users/:mongoId', async (req, res) => {
         const { mongoId } = req.params;
         let users;
         // Get the current user's friend list
-        if (await register.findById(mongoId).friends !== undefined) {
+        let fr = await register.findById(mongoId)
 
+        let currentUserFriends = [];
+        let currentUserSentFriendReqs = [];
+        let currentUserReceivedFriendReqs = [];
+
+        if (fr.friends.length !==0){
+            console.log("hello here")
             const currentUser = await register.findById(mongoId).populate('friends', 'name _id userId').lean();
-            console.log(currentUser)
-      
-            console.log(currentUser.friends)
-
-            const currentUserFriends = currentUser.friends.map(friend => friend.userId);
-            console.log(currentUserFriends)
-
-            // Find users who are not friends with the current user
-            users = await register.find({ userId: { $nin: currentUserFriends }, _id: { $ne: mongoId } });
+            currentUserFriends = currentUser.friends.map(friend => friend.userId);
         }
-        else {
-            users = await register.find({ _id: { $ne: mongoId } });
-
+        else{
+            console.log("hello here not")
+            currentUserFriends = [];
         }
+        
+        if (fr.sentfriendRequests.length !== 0){
+            console.log("hello 2")
+            const currentUser2 = await register.findById(mongoId).populate('sentfriendRequests', 'name _id userId').lean();
+            currentUserSentFriendReqs = currentUser2.sentfriendRequests.map(sentfriendreq => sentfriendreq.userId);
+        }
+        else{
+            console.log("hello 2 not")
+            currentUserSentFriendReqs = [];
+        }
+        if (fr.friendRequests.length !==0){
+            console.log("hello 3")
+            const currentUser3 = await register.findById(mongoId).populate('friendRequests', 'name _id userId').lean();
+             currentUserReceivedFriendReqs = currentUser3.friendRequests.map(recfriendreq => recfriendreq.userId);
+        }
+        else{
+            console.log("hello 3 not")
+            currentUserReceivedFriendReqs = [];
+        }
+        
+        console.log("hello finally")
+
+        const allUserIds = [...currentUserFriends, ...currentUserSentFriendReqs, ...currentUserReceivedFriendReqs]
+         users = await register.find({ userId: { $nin: allUserIds }, _id: { $ne: mongoId } });
+        // if (fr.friends.length !== 0 && fr.sentfriendRequests.length !== 0 && fr.friendRequests.length !==0) {
+
+        //     const currentUser = await register.findById(mongoId).populate('friends', 'name _id userId').lean();
+        //     const currentUser2 = await register.findById(mongoId).populate('sentfriendRequests', 'name _id userId').lean();
+        //     const currentUser3 = await register.findById(mongoId).populate('friendRequests', 'name _id userId').lean();
+
+        //     const currentUserFriends = currentUser.friends.map(friend => friend.userId);
+        //     const currentUserSentFriendReqs = currentUser2.sentfriendRequests.map(sentfriendreq => sentfriendreq.userId);
+        //     const currentUserReceivedFriendReqs = currentUser3.friendRequests.map(recfriendreq => recfriendreq.userId);
+
+        //     users = await register.find({ userId: { $nin: [currentUserFriends, currentUserSentFriendReqs, currentUserReceivedFriendReqs] }, _id: { $ne: mongoId } });
         // }
-        // else{
-        // const users = await register.find({ _id: { $ne: mongoId } })
+
+        // else if (fr.friends.length !== 0 && fr.sentfriendRequests.length === 0 && fr.friendRequests.length ===0) {
+        //     const currentUser = await register.findById(mongoId).populate('friends', 'name _id userId').lean();
+
+        //     const currentUserFriends = currentUser.friends.map(friend => friend.userId);
+
+        //     users = await register.find({ userId: { $nin: currentUserFriends }, _id: { $ne: mongoId } });
+        // }
+
+        // else if (fr.friends.length === 0 && fr.sentfriendRequests.length !== 0 && fr.friendRequests.length !==0) {
+        //     const currentUser = await register.findById(mongoId).populate('friends', 'name _id userId').lean();
+
+        //     const currentUserSentFriendReqs = currentUser.sentfriendRequests.map(sentfriendreq => sentfriendreq._id);
+
+        //     users = await register.find({ userId: { $nin: currentUserSentFriendReqs }, _id: { $ne: mongoId } });
+        // }
+        // else {
+        //     console.log("here")
+        //     users = await register.find({ _id: { $ne: mongoId } });
+
         // }
 
         res.status(200).json(users);
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Error retrieving users" });
@@ -146,6 +198,24 @@ app.get('/friend-request/:mongoId', async (req, res) => {
     } catch (error) {
         res.status(500).send("error fetching friend request")
 
+    }
+})
+
+app.get('/my-friends/:mongoId', async (req, res) => {
+    try {
+        const { mongoId } = req.params;
+        const user = await register.findById(mongoId).populate('friends', 'name email').lean()
+
+        if (user.friends == undefined) {
+            res.status(200).send({ status: 'empty' })
+        }
+        else {
+            const friends = user.friends;
+            res.status(200).json(friends)
+
+        }
+    } catch (error) {
+        res.status(500).send("error fetching friends")
     }
 })
 
@@ -394,7 +464,7 @@ app.post('/sendFCM', async (req, res) => {
         const hours = currentDate.hours();
         const minutes = currentDate.minutes();
         const ampm = hours >= 12 ? 'PM' : 'AM';
-        await adminNotifications.insertMany({   date: currentDate.toISOString().split('T')[0],   time: `${hours % 12}:${minutes < 10 ? '0' : ''}${minutes} ${ampm}`,title: req.body.title, body: req.body.body})
+        await adminNotifications.insertMany({ date: currentDate.toISOString().split('T')[0], time: `${hours % 12}:${minutes < 10 ? '0' : ''}${minutes} ${ampm}`, title: req.body.title, body: req.body.body })
 
         fcm.send({
             registration_ids: dv,
@@ -473,12 +543,12 @@ app.post('/sendFCM', async (req, res) => {
 
 
 
-app.get('/get-notifs',async(req,res)=>{
+app.get('/get-notifs', async (req, res) => {
     try {
         let response = await adminNotifications.find({})
         res.status(200).send(response)
     } catch (error) {
-        res.status(404).json({status: "failed"})
+        res.status(404).json({ status: "failed" })
     }
 })
 
@@ -575,18 +645,18 @@ app.post('/admin/login', checkAdminLoginInfo, (req, res) => {
 })
 
 
-app.post('/save-download-url/:mongoId',async(req,res)=>{
+app.post('/save-download-url/:mongoId', async (req, res) => {
     const downloadUrl = req.body.downloadUrl;
     console.log(downloadUrl)
     try {
         const user = await register.findById(req.params.mongoId)
         // console.log(user)
-        user.rescue_video_download_urls.push({download_link:downloadUrl})
+        user.rescue_video_download_urls.push({ download_link: downloadUrl })
         await user.save();
-        res.status(200).json({success:true})
+        res.status(200).json({ success: true })
 
     } catch (error) {
-        res.status(500).json({success: false, error: error.msg})
+        res.status(500).json({ success: false, error: error.msg })
         console.log(error)
     }
 })
