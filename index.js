@@ -88,17 +88,17 @@ app.get('/users/:mongoId', async (req, res) => {
         let currentUserReceivedFriendReqs = [];
 
         if (fr.friends.length !==0){
-            console.log("hello here")
+            // console.log("hello here")
             const currentUser = await register.findById(mongoId).populate('friends', 'name _id userId').lean();
             currentUserFriends = currentUser.friends.map(friend => friend.userId);
         }
         else{
-            console.log("hello here not")
+            // console.log("hello here not")
             currentUserFriends = [];
         }
         
         if (fr.sentfriendRequests.length !== 0){
-            console.log("hello 2")
+            // console.log("hello 2")
             const currentUser2 = await register.findById(mongoId).populate('sentfriendRequests', 'name _id userId').lean();
             currentUserSentFriendReqs = currentUser2.sentfriendRequests.map(sentfriendreq => sentfriendreq.userId);
         }
@@ -107,12 +107,12 @@ app.get('/users/:mongoId', async (req, res) => {
             currentUserSentFriendReqs = [];
         }
         if (fr.friendRequests.length !==0){
-            console.log("hello 3")
+            // console.log("hello 3")
             const currentUser3 = await register.findById(mongoId).populate('friendRequests', 'name _id userId').lean();
              currentUserReceivedFriendReqs = currentUser3.friendRequests.map(recfriendreq => recfriendreq.userId);
         }
         else{
-            console.log("hello 3 not")
+            // console.log("hello 3 not")
             currentUserReceivedFriendReqs = [];
         }
         
@@ -249,6 +249,22 @@ app.post('/friend-request/accept', async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Internal Server Error" })
 
+    }
+})
+
+app.post('/remove-friend',async(req,res)=>{
+    try {
+        // const {mongoId} = req.params
+        const {currentUserId, selectedUserId} = req.body;
+
+        await register.findByIdAndUpdate(selectedUserId, { $pull: { friends: currentUserId } })
+
+        await register.findByIdAndUpdate(currentUserId, { $pull: { friends: selectedUserId } })
+
+        res.sendStatus(200)
+
+    } catch (error) {
+        res.statusCode(404);
     }
 })
 
