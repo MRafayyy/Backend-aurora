@@ -3,16 +3,14 @@ const express = require('express')
 const app = require('express')();
 const { createServer } = require("http");
 const { Server } = require("socket.io");
-const httpServer = createServer(app);
-const io = new Server(httpServer, { /* options */ });
+const server = createServer(app);
+const io = new Server(server);
 const mongoose = require('mongoose')
+
+
+
+
 const moment = require('moment-timezone');
-
-// const http = require('http').Server(app)
-// const io = require('socket.io')(http);
-
-
-
 require('./db/db')
 const register = require('./model/registrationInfo')
 const Nadra = require('./model/NadraModel')
@@ -25,34 +23,44 @@ const crypto = require('crypto-js')
 const cors = require('cors')
 const { main, main2 } = require('./SendMail');
 const FCM = require('fcm-node');
-// const { Socket } = require('socket.io');
 
 app.use(urlencoded({ extended: false }))
 app.use(express.json())
 app.use(cors())
 
-// app.use()
-// app.use('/',(req,res)=>{
-//     res.send({"hey":"np"})
-// })
-
 
 const usp = io.of('/auro')
 
 let count = 0;
-usp.on('connection', async (socket) => {
+io.on('connection', async (socket) => {
     console.log("a user connected")
-    console.log(socket.handshake.auth.Token)
-    const userId = socket.handshake.auth.Token
-    await register.findOneAndUpdate({ userId: userId }, { $set: { is_online: '1' } })
-    count = count + 1;
-    socket.broadcast.emit('getOnlineUsers', { userId: userId, count: count })
+    // console.log(socket.handshake.auth.Token)
+    // const userId = socket.handshake.auth.Token
+    // await register.findOneAndUpdate({ userId: userId }, { $set: { is_online: '1' } })
+    // count = count + 1;
+    // socket.broadcast.emit('getOnlineUsers', { userId: userId, count: count })
+
+    socket.on('shareCoordinates', (obj)=>{
+        console.log(obj)
+        console.log("j")
+        // socket.broadcast.emit('bd', {la: 'good'})
+        io.emit('bd', {la: 'good'})
+    })
+    socket.on('newMarker', (obj)=>{
+        console.log(obj)
+        console.log("j")
+    })
+    socket.on('newMarkers', (obj)=>{
+        console.log(obj)
+        console.log("g")
+    })
+
 
     socket.on('disconnect', async () => {
         console.log("a user disconnected")
-        await register.findOneAndUpdate({ userId: userId }, { $set: { is_online: '0' } })
-        count = count - 1;
-        socket.broadcast.emit('getOfflineUsers', { userId: userId, count: count })
+        // await register.findOneAndUpdate({ userId: userId }, { $set: { is_online: '0' } })
+        // count = count - 1;
+        // socket.broadcast.emit('getOfflineUsers', { userId: userId, count: count })
     })
 })
 
@@ -682,7 +690,7 @@ app.post('/save-download-url/:mongoId', async (req, res) => {
 
 
 
-httpServer.listen(3000, () => {
+server.listen(3000, () => {
     console.log('server running on port 3000')
 })
 
