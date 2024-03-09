@@ -42,17 +42,17 @@ io.on('connection', async (socket) => {
 
     socket.on('shareCoordinates', (obj)=>{
         console.log(obj)
-        console.log("j")
+        // console.log("j")
         // socket.broadcast.emit('bd', {la: 'good'})
-        io.emit('bd', {la: 'good'})
+        io.emit('bd', {latlng: obj})
     })
     socket.on('newMarker', (obj)=>{
         console.log(obj)
-        console.log("j")
+        // console.log("j")
     })
     socket.on('newMarkers', (obj)=>{
         console.log(obj)
-        console.log("g")
+        // console.log("g")
     })
 
 
