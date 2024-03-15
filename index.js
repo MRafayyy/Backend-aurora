@@ -33,43 +33,74 @@ const usp = io.of('/auro')
 
 let count = 0;
 io.on('connection', async (socket) => {
-    console.log("a user connected")
-    // console.log(socket.handshake.auth.Token)
-    // const userId = socket.handshake.auth.Token
-    // await register.findOneAndUpdate({ userId: userId }, { $set: { is_online: '1' } })
-    // count = count + 1;
-    // socket.broadcast.emit('getOnlineUsers', { userId: userId, count: count })
 
-    socket.on('shareCoordinates', (obj)=>{
-        console.log(obj)
-        // console.log("j")
+if(socket.handshake.auth.userType === 'user') {
+
+    
+    console.log("a user connected")
+    
+    // socket.broadcast.emit('getOnlineUsers', { userId: userId, count: count })
+    
+    socket.on('shareCoordinates', (data)=>{
+        socket.join(data.userId)
+        console.log(data.userId)
+        console.log(data.Location)
+        io.to(data.userId).emit('bd', data)
         // socket.broadcast.emit('bd', {la: 'good'})
-        io.emit('bd', {latlng: obj})
+        // io.emit('bd', {latlng: obj})
     })
     socket.on('newMarker', (obj)=>{
-        console.log(obj)
-        // console.log("j")
+        // console.log(obj)
+        
     })
     socket.on('newMarkers', (obj)=>{
-        console.log(obj)
-        // console.log("g")
+        // console.log(obj)
+        
     })
-
-
+    
+    
     socket.on('disconnect', async () => {
         console.log("a user disconnected")
         // await register.findOneAndUpdate({ userId: userId }, { $set: { is_online: '0' } })
         // count = count - 1;
         // socket.broadcast.emit('getOfflineUsers', { userId: userId, count: count })
     })
+
+}
+
+
+else{
+
+    try {
+        
+        const allUsers = await register.find({});
+        const allUserIds = allUsers.map((value,index)=>{
+            return value.userId;
+        })
+
+        socket.join(allUserIds);
+
+        // socket.on('userLocationData',(data)=>{
+
+        // })
+
+
+    } catch (error) {
+        console.log(error)
+    }
+     
+
+}
+
+
 })
 
 // ---------------------------------------------------------------------------------------
 
 
 // app.get('/users/:userId', async (req, res) => {
-//     try {
-//         const userId = req.params.userId;
+    //     try {
+        //         const userId = req.params.userId;
 //         const recepient = await register.find({})
 //         let users = await register.find({ userId: { $ne: userId } })
 
@@ -688,6 +719,66 @@ app.post('/save-download-url/:mongoId', async (req, res) => {
 
 
 
+app.post('/sendToOne/:mongoId', async(req,res)=>{
+
+    try {
+        let User = await register.findById({_id: req.params.mongoId})
+        // console.log(totalTokens)
+        // res.json(totalTokens)
+sendNotifToOne(User)
+        
+    } catch (error) {
+        console.log("error isssssssss:" + error)
+    }
+})
+
+
+const sendNotifToOne = async(User)=>{
+
+    const fcm = new FCM('AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO')
+        let dv= []
+        dv.push(User.FCMDeviceToken);
+        // totalTokens.forEach((value, index) => {
+        //     dv.push(value.DeviceToken)
+        // })
+        const currentDate = moment().tz('Asia/Karachi')
+        console.log(currentDate)
+        const hours = currentDate.hours();
+        const minutes = currentDate.minutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        await adminNotifications.insertMany({ date: currentDate.toISOString().split('T')[0], time: `${hours % 12}:${minutes < 10 ? '0' : ''}${minutes} ${ampm}`, title: req.body.title, body: req.body.body })
+
+        fcm.send({
+            registration_ids: dv,
+            content_available: true,
+            mutable_content: true,
+            // data: {
+            //     body: req.body.body,
+            //     title: req.body.title,
+            //     // imageUrl: 'https://my-cdn.com/app-logo.png',
+            //     icon: "myicon",
+            //     sound: "mySound",
+
+            // },
+            notification: {
+                body: req.body.body,
+                title: req.body.title,
+                // imageUrl: 'https://my-cdn.com/app-logo.png',
+                icon: "myicon",
+                sound: "mySound",
+
+            }
+        }, (err, response) => {
+            if (err) {
+                console.log("---------------" + err)
+            }
+            if (response) {
+                console.log(response)
+
+            }
+        })
+
+}
 
 
 server.listen(3000, () => {
