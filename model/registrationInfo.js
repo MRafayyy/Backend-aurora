@@ -11,7 +11,7 @@ const registrationSchema = new Schema({
     password: String,
     Token: String,
     FCMDeviceToken: String,
-    is_online: String,
+    is_online: Number,
     nadra_verified: Number,
     rescue_video_download_urls: [
         {
