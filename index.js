@@ -42,6 +42,16 @@ io.on("connection", async (socket) => {
         });
 
         socket.broadcast.emit("aUserGotOnline");
+
+        // ------------------------
+        const allUsers = await register.find({});
+        const allUserIds = allUsers.map((value, index) => {
+          return value.userId;
+        });
+
+        socket.join(allUserIds);
+
+        // ------------------------
       } catch (error) {
         console.log(error);
       }
@@ -67,33 +77,31 @@ io.on("connection", async (socket) => {
           { $set: { is_online: 0 } }
         );
         socket.broadcast.emit("aUserGotOffline");
-    } catch (error) {
-        console.log(error);
-    }
-    });
-    
-    socket.on("disconnect", async () => {
-        console.log("a user disconnected");
-        // await register.findOneAndUpdate({ userId: userId }, { $set: { is_online: '0' } })
-        // count = count - 1;
-        // socket.broadcast.emit('getOfflineUsers', { userId: userId, count: count })
-        
-        try {
-            console.log("status")
-            let response = await register.findByIdAndUpdate(
-                connectedUsers[socket.id],
-                { $set: { is_online: 0 } }
-                );
-                socket.broadcast.emit("aUserGotOffline");
-        delete connectedUsers[socket.id];
       } catch (error) {
         console.log(error);
       }
     });
 
-  } else {
+    socket.on("disconnect", async () => {
+      console.log("a user disconnected");
+      // await register.findOneAndUpdate({ userId: userId }, { $set: { is_online: '0' } })
+      // count = count - 1;
+      // socket.broadcast.emit('getOfflineUsers', { userId: userId, count: count })
 
-    console.log("admin connected")
+      try {
+        console.log("status");
+        let response = await register.findByIdAndUpdate(
+          connectedUsers[socket.id],
+          { $set: { is_online: 0 } }
+        );
+        socket.broadcast.emit("aUserGotOffline");
+        delete connectedUsers[socket.id];
+      } catch (error) {
+        console.log(error);
+      }
+    });
+  } else {
+    console.log("admin connected");
     try {
       const allUsers = await register.find({});
       const allUserIds = allUsers.map((value, index) => {
@@ -365,10 +373,7 @@ app.put("/do", async (req, res) => {
     //     let response2 = await register.findOneAndUpdate({ userId: value.userId }, { $set: { name: value.name } })
     // })
 
-    let response = await register.updateMany(
-      {},
-      { $set: { is_online: 0 } }
-    );
+    let response = await register.updateMany({}, { $set: { is_online: 0 } });
 
     res.status(200).json({ message: "done", updatedCount: response.nModified });
   } catch (error) {
