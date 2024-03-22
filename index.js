@@ -45,19 +45,12 @@ io.on("connection", async (socket) => {
 
         // ------------------------
         const allUsers = await register.find({});
-        const allMongoIds = allUsers.map((value, index) => {
-        // const allUserIds = allUsers.map((value, index) => {
-          // return value.userId;
-          return value._id;
-        });
-        const allUserIds = allUsers.map((value, index) => {
-          return value.userId;
-        });
 
-        socket.join(allMongoIds);
-        socket.join(allUserIds);
-
-        // ------------------------
+        allUsers.forEach((user) => {
+          console.log(user._id.toString());
+          socket.join(user._id.toString()); // Join room based on MongoDB ID
+          socket.join(user.userId); // Join room based on user ID
+        });
       } catch (error) {
         console.log(error);
       }
@@ -71,13 +64,12 @@ io.on("connection", async (socket) => {
       console.log(data.userId);
       console.log(data.mongoId);
       console.log(data.Location);
-      io.to(data.userId).emit(data.userId, data);
+      socket.to(data.userId).emit(data.userId, data);
 
-      io.to(data.mongoId).emit('6548994bb3a3a12ab6bda202', data);
-      // io.to(data.mongoId).emit(`${data.mongoId}`, data);
+      socket.to(data.mongoId).emit(data.mongoId, data);
+      // io.to(data.mongoId).emit(data.mongoId, data);
       // socket.broadcast.emit(data.mongoId, data)
 
-      // socket.broadcast.emit('bd', {la: 'good'})
       // io.emit('bd', { data})
     });
 
