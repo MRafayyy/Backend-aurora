@@ -768,17 +768,23 @@ app.post("/save-download-url/:mongoId", async (req, res) => {
 });
 
 app.post("/sendToOne/:mongoId", async (req, res) => {
+  const data = {
+
+    body: req.body.body,
+    title: req.body.title,
+  }
   try {
     let User = await register.findById({ _id: req.params.mongoId });
     // console.log(totalTokens)
     // res.json(totalTokens)
-    sendNotifToOne(User);
+    sendNotifToOne(data,User);
   } catch (error) {
     console.log("error isssssssss:" + error);
   }
 });
 
-const sendNotifToOne = async (User) => {
+const sendNotifToOne = async (data,User) => {
+  console.log(data)
   const fcm = new FCM(
     "AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO"
   );
@@ -795,8 +801,8 @@ const sendNotifToOne = async (User) => {
   await adminNotifications.insertMany({
     date: currentDate.toISOString().split("T")[0],
     time: `${hours % 12}:${minutes < 10 ? "0" : ""}${minutes} ${ampm}`,
-    title: req.body.title,
-    body: req.body.body,
+    title: data.title,
+    body: data.body,
   });
 
   fcm.send(
@@ -813,8 +819,8 @@ const sendNotifToOne = async (User) => {
 
       // },
       notification: {
-        body: req.body.body,
-        title: req.body.title,
+        body: data.body,
+        title: data.title,
         // imageUrl: 'https://my-cdn.com/app-logo.png',
         icon: "myicon",
         sound: "mySound",
