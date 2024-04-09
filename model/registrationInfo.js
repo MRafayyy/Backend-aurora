@@ -13,6 +13,20 @@ const registrationSchema = new Schema({
     FCMDeviceToken: String,
     is_online: Number,
     nadra_verified: Number,
+    userSpecificNotifications: [
+        {
+            date: {
+                type: String,
+                required: true
+            },
+            time: {
+                type: String,
+                required: true
+            },
+            title: String,
+            body: String
+        }
+    ],
     rescue_video_download_urls: [
         {
             download_link: String,
@@ -37,7 +51,18 @@ const registrationSchema = new Schema({
             ref: "register"
         }
     ],
-    // date: {type: Date, default: Date.now}
+    currentRescueButtonStatus: Boolean,
+    rescueButtonHistory: [
+        {timeWhenRescueButtonPressed: String,
+        dateWhenRescueButtonPressed: String,
+        locationWhereRescuePressed: Object,
+        safeButtonPressed: String,
+        timeWhenSafeButtonPressed: String,
+        dateWhenSafeButtonPressed: String,
+        locationWhereSafeButtonPressed: Object,
+        }
+    ]
+  
 })
 
 const register = mongoose.model('register', registrationSchema);
