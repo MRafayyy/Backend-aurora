@@ -1025,8 +1025,9 @@ const sendNotifToMany = async (data, Users) => {
         sound: "mySound",
         topRightPicUrl:
           "https://img2.cgtrader.com/items/3085991/5ab0676214/large/neon-letters-3d-model-obj-fbx-blend.jpg",
-          // screen: 'Screen_Home2',
-          screen: 'Screen_ReceiveNotifs',
+          screen: 'Screen_Home',
+          // screen: 'Screen_Decider',
+          // screen: 'HomeTabs, { screen: Screen_Home}',
       },
       // notification: {
       //   body: data.body,
