@@ -47,7 +47,7 @@ io.on("connection", async (socket) => {
         const allUsers = await register.find({});
 
         allUsers.forEach((user) => {
-          console.log(user._id.toString());
+          // console.log(user._id.toString());
           socket.join(user._id.toString()); // Join room based on MongoDB ID
           socket.join(user.userId); // Join room based on user ID
         });
@@ -141,6 +141,19 @@ io.on("connection", async (socket) => {
 //         console.log(error)
 //     }
 // })
+
+app.get('/getRescueButtonStatus/:mongoId',async(req,res)=>{
+  try {
+    const mongoId = req.params.mongoId
+    let user = await register.findById(mongoId)
+    const status = user.currentRescueButtonStatus
+    const location =  user.rescueButtonHistory.pop().locationWhereRescuePressed
+
+    res.status(200).send({status, location})
+  } catch (error) {
+    res.send("Invalid error")
+  }
+})
 
 app.post("/pressedRescueButton/:mongoId", async (req, res) => {
   try {
@@ -789,7 +802,7 @@ app.get("/get-notifs", async (req, res) => {
 app.get("/get-mynotifs/:mongoId", async (req, res) => {
   try {
     let response = await register.findById({
-      _id: req.params.mongoId
+      _id: req.params.mongoId,
     });
     res.status(200).send(response.userSpecificNotifications);
   } catch (error) {
@@ -1025,9 +1038,9 @@ const sendNotifToMany = async (data, Users) => {
         sound: "mySound",
         topRightPicUrl:
           "https://img2.cgtrader.com/items/3085991/5ab0676214/large/neon-letters-3d-model-obj-fbx-blend.jpg",
-          screen: 'Screen_Home',
-          // screen: 'Screen_Decider',
-          // screen: 'HomeTabs, { screen: Screen_Home}',
+        screen: "Screen_Home",
+        // screen: 'Screen_Decider',
+        // screen: 'HomeTabs, { screen: Screen_Home}',
       },
       // notification: {
       //   body: data.body,
