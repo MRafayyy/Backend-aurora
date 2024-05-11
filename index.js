@@ -6,6 +6,9 @@ const { Server } = require("socket.io");
 const server = createServer(app);
 const io = new Server(server);
 const mongoose = require("mongoose");
+const contacts = require('./routes/contacts')
+const women = require('./routes/women');
+const admin = require('./routes/admin')
 
 const moment = require("moment-timezone");
 require("./db/db");
@@ -20,109 +23,20 @@ const crypto = require("crypto-js");
 const cors = require("cors");
 const { main, main2 } = require("./SendMail");
 const FCM = require("fcm-node");
+const handleSocketConnections = require("./sockets/sockets");
 
 app.use(urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cors());
 
+
+app.use('/contacts', contacts);
+app.use('/women', women);
+app.use('/admin', admin);
+
 const usp = io.of("/auro");
 
-let connectedUsers = {};
-io.on("connection", async (socket) => {
-  if (socket.handshake.auth.userType === "user") {
-    console.log("a user connected");
-
-    socket.on("LoggedIn", async (data) => {
-      const { mongoId } = data;
-      connectedUsers[socket.id] = mongoId;
-      try {
-        console.log(data.mongoId);
-        let response = await register.findByIdAndUpdate(data.mongoId, {
-          is_online: 1,
-        });
-
-        socket.broadcast.emit("aUserGotOnline");
-
-        // ------------------------
-        const allUsers = await register.find({});
-
-        allUsers.forEach((user) => {
-          // console.log(user._id.toString());
-          socket.join(user._id.toString()); // Join room based on MongoDB ID
-          socket.join(user.userId); // Join room based on user ID
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    });
-
-    // socket.broadcast.emit('getOnlineUsers', { userId: userId, count: count })
-
-    socket.on("shareCoordinates", (data) => {
-      // socket.join(data.userId);
-      // socket.join(data.mongoId);
-      console.log(data.userId);
-      console.log(data.mongoId);
-      console.log(data.Location);
-      socket.to(data.userId).emit(data.userId, data);
-
-      socket.to(data.mongoId).emit(data.mongoId, data);
-      // io.to(data.mongoId).emit(data.mongoId, data);
-      // socket.broadcast.emit(data.mongoId, data)
-
-      // io.emit('bd', { data})
-    });
-
-    socket.on("newMarker", (obj) => {});
-
-    socket.on("Iamloggingout", async () => {
-      try {
-        let response = await register.findByIdAndUpdate(
-          connectedUsers[socket.id],
-          { $set: { is_online: 0 } }
-        );
-        socket.broadcast.emit("aUserGotOffline");
-      } catch (error) {
-        console.log(error);
-      }
-    });
-
-    socket.on("disconnect", async () => {
-      console.log("a user disconnected");
-      // await register.findOneAndUpdate({ userId: userId }, { $set: { is_online: '0' } })
-      // count = count - 1;
-      // socket.broadcast.emit('getOfflineUsers', { userId: userId, count: count })
-
-      try {
-        console.log("status");
-        let response = await register.findByIdAndUpdate(
-          connectedUsers[socket.id],
-          { $set: { is_online: 0 } }
-        );
-        socket.broadcast.emit("aUserGotOffline");
-        delete connectedUsers[socket.id];
-      } catch (error) {
-        console.log(error);
-      }
-    });
-  } else {
-    console.log("admin connected");
-    try {
-      const allUsers = await register.find({});
-      const allUserIds = allUsers.map((value, index) => {
-        return value.userId;
-      });
-
-      socket.join(allUserIds);
-
-      // socket.on('userLocationData',(data)=>{
-
-      // })
-    } catch (error) {
-      console.log(error);
-    }
-  }
-});
+handleSocketConnections(io);
 
 // ---------------------------------------------------------------------------------------
 
@@ -142,14 +56,14 @@ io.on("connection", async (socket) => {
 //     }
 // })
 
-app.get('/getRescueButtonStatus/:mongoId',async(req,res)=>{
+app.get('/getRescueButtonStatus/:mongoId', async (req, res) => {
   try {
     const mongoId = req.params.mongoId
     let user = await register.findById(mongoId)
     const status = user.currentRescueButtonStatus
-    const location =  user.rescueButtonHistory.pop().locationWhereRescuePressed
+    const location = user.rescueButtonHistory.pop().locationWhereRescuePressed
 
-    res.status(200).send({status, location})
+    res.status(200).send({ status, location })
   } catch (error) {
     res.send("Invalid error")
   }
@@ -240,29 +154,7 @@ app.post("/pressedSafeButton/:mongoId", async (req, res) => {
         $set: { currentRescueButtonStatus: false },
       }
     );
-    // let response = await register.findByIdAndUpdate(
-    //   { _id: mongoId },
-    //   {
-    //     // $addToSet: {
-    //     //   "rescueButtonHistory.$[elem].timeWhenRescueButtonPressed": "ujfftfff",
-    //     //   "rescueButtonHistory.$[elem].timeWhenSafeButtonPressed":
-    //     //     timeWhenSafeButtonPressed,
-    //     //   "rescueButtonHistory.$[elem].dateWhenSafeButtonPressed":
-    //     //     dateWhenSafeButtonPressed,
-    //     //   "rescueButtonHistory.$[elem].locationWhereSafeButtonPressed":
-    //     //     locationWhereSafeButtonPressed,
-    //     //     // currentRescueButtonStatus: false,
-    //     // },
-    //     $set:{
-    //       'rescueButtonHistory.$[elem]' :
-    //         { timeWhenSafeButtonPressed : timeWhenSafeButtonPressed}
-    //     }
-    //   },
-    //   {
-    //     arrayFilters: [{ elem: { $eq: { $size: '$rescueButtonHistory' - 1 } } }],
-    //     new: true
-    //   }
-    // );
+
 
     res.status(200).send(true);
   } catch (error) {
@@ -519,156 +411,12 @@ app.put("/do", async (req, res) => {
   }
 });
 
-app.post("/VerifyNadraInfo", async (req, res) => {
-  if (req.body !== null) {
-    try {
-      let u = req.body.userId;
-      let response = await Nadra.findOneAndUpdate(
-        {
-          name: req.body.name,
-          fathers_name: req.body.fathers_name,
-          cnic: req.body.cnic,
-          gender: req.body.gender,
-        },
-        { $set: { userId: req.body.userId, nadra_verified: 1 } },
-        { new: true }
-      );
-      let response2 = await register.findOneAndUpdate(
-        { userId },
-        { $set: { name: req.body.userId } }
-      );
-      console.log(response);
-      if (response === null) {
-        res.status(500).send(false);
-        console.log(response);
-      } else {
-        let eresponse = await register.findOne({ userId: u });
-        console.log(eresponse);
-        let mail = await main2(eresponse.email);
-        if (mail) {
-        }
-        res.status(200).send(true);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
-});
 
-app.post("/register", async (req, res) => {
-  const obj1 = req.body;
-  console.log(obj1);
-  try {
-    let response2 = await register.find({
-      $or: [{ userId: obj1.userId }, { email: obj1.email }],
-    });
-    if (response2.length === 0) {
-      let response = await register.insertMany(obj1);
-      res.send(true);
-    } else {
-      console.log("what " + response2);
-      res.send(false);
-    }
-  } catch (error) {
-    console.log(error);
-  }
-});
 
-const checkLoginInfo = async (req, res, next) => {
-  try {
-    console.log(req.body.userId);
-    console.log(req.body.password);
-    let response = await register.findOne({
-      userId: req.body.userId,
-      password: req.body.password,
-    });
-    if (response === null) {
-      // res.send("login credentials did not match")
-      res.send({ success: false, reason: "Login credentials did not match" });
-      // console.log(response)
-      return;
-    }
-    if (response.nadra_verified !== 1) {
-      res.send({ success: false, reason: "User not verified by Nadra" });
-      return;
-    }
-    // else {
-    next();
-    // }
-  } catch (error) {
-    console.log(error);
-    // res.send("login credentials did not match")
-  }
-};
 
-const secretKey = "hey";
 
-app.post("/login", checkLoginInfo, (req, res) => {
-  // res.send("u can login")
-  const userInfo = {
-    userId: req.body.userId,
-    password: req.body.password,
-  };
 
-  try {
-    jwt.sign(
-      { userInfo },
-      secretKey,
-      { expiresIn: "100000s" },
-      async (err, token) => {
-        let encryptedToken = crypto.AES.encrypt(token, secretKey).toString();
 
-        try {
-          let t1 = await FcmDeviceToken.findOne({
-            DeviceToken: req.body.FcmDeviceToken,
-          }); //for device token
-          if (t1 == null) {
-            let t2 = await FcmDeviceToken.create({
-              DeviceToken: req.body.FcmDeviceToken,
-            }); //for device token
-          }
-        } catch (error) {
-          res.json({ success: "FCMTokenError", reason: error });
-          console.log("fmc token error");
-        }
-
-        let response = await register.findOneAndUpdate(
-          userInfo,
-          { $set: { Token: token, FCMDeviceToken: req.body.FcmDeviceToken } },
-          { new: true }
-        );
-        // let response = await register.findOneAndUpdate({userId: req.body.userId, password: req.body.password},{$set : {Token : token}},{new: true})
-        // console.log(response)
-        // res.send(true);
-
-        if (response !== null) {
-          res.json({
-            success: true,
-            token: encryptedToken,
-            mongoId: response._id,
-          });
-        }
-      }
-    );
-  } catch (error) {
-    res.json({ success: "SomeError", reason: error });
-    console.log(error);
-  }
-});
-
-app.post("/verifyToken", async function verifyToken(req, res) {
-  let decryptedToken = crypto.AES.decrypt(
-    req.body.password,
-    secretKey
-  ).toString(crypto.enc.Utf8);
-  jwt.verify(decryptedToken, secretKey, (error, authData) => {
-    if (error) {
-      res.send({ success: false });
-    } else {
-      res.send({ success: true, authData });
-    }
-  });
-});
 
 app.post("/forgotpassword", cors(), async (req, res) => {
   try {
@@ -748,43 +496,6 @@ app.post("/sendFCM", async (req, res) => {
       }
     );
 
-    // for (let i = 0; i < totalTokens.length; i++) {
-
-    // ---------------------------------
-    //     // await admin.messaging().sendMulticast({
-    //     //     tokens: [
-    //     //      totalTokens[i].DeviceToken
-    //     //     ], // ['token_1', 'token_2', ...]
-    //     //     notification: {
-    //     //       title: 'Basic Notification',
-    //     //       body: 'This is a basic notification sent from the server!',
-    //     //       imageUrl: 'https://my-cdn.com/app-logo.png',
-    //     //     },
-    //     //   });
-    // ---------------------------------
-    //     // POST https://fcm.googleapis.com/v1/projects/myproject-b5ae1/messages:send HTTP/1.1
-    //     let url = 'https://fcm.googleapis.com/fcm/send'
-    //     let response = await fetch(url, {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //             'Authorization': 'Bearer AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO'
-    //         },
-    //         body: JSON.stringify({
-
-    //             "data": {},
-    //             "notification": {
-    //                 "body": "This is an FCM notification message!",
-    //                 "title": "FCM Message"
-    //             },
-    //             "to": totalTokens[i].DeviceToken,
-    //         }
-
-    //         )
-
-    //     })
-    // }
-    //     response = response.json()
   } catch (error) {
     console.log("error isssssssss:" + error);
   }
@@ -810,91 +521,9 @@ app.get("/get-mynotifs/:mongoId", async (req, res) => {
   }
 });
 
-app.post("/admin/register", async (req, res) => {
-  // const obj = {
-  //     adminId: req.body.adminId,
-  //     password: req.body.password
-  // }
-  const obj = req.body;
-  try {
-    let response = await Admin.insertMany(obj);
-    res.send(true);
-  } catch (error) {
-    console.log(error);
-    res.send(false);
-  }
-});
 
-const checkAdminLoginInfo = async (req, res, next) => {
-  try {
-    console.log(req.body.adminId);
-    console.log(req.body.password);
-    let response = await Admin.findOne({
-      adminId: req.body.adminId,
-      password: req.body.password,
-    });
-    if (response === null) {
-      res.send({ success: false, reason: "Login credentials did not match" });
-      return;
-    }
 
-    //    else
 
-    res.send({ success: true });
-    // next();
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-// const secretKey = "hey";
-
-app.post("/admin/login", checkAdminLoginInfo, (req, res) => {
-  const adminInfo = {
-    userId: req.body.userId,
-    password: req.body.password,
-  };
-
-  // try {
-  //     jwt.sign({ userInfo }, secretKey, { expiresIn: '100000s' }, async (err, token) => {
-
-  //         let encryptedToken = crypto.AES.encrypt(token, secretKey).toString();
-
-  //         try {
-
-  //             let t1 = await FcmDeviceToken.findOne({ DeviceToken: req.body.FcmDeviceToken }) //for device token
-  //             if (t1 == null) {
-
-  //                 let t2 = await FcmDeviceToken.create({ DeviceToken: req.body.FcmDeviceToken }) //for device token
-  //             }
-  //         } catch (error) {
-  //             res.json({ success: "FCMTokenError", reason: error });
-  //             console.log("fmc token error")
-  //         }
-
-  //         let response = await register.findOneAndUpdate(userInfo, { $set: { Token: token, FCMDeviceToken: req.body.FcmDeviceToken } }, { new: true })
-  //         // let response = await register.findOneAndUpdate({userId: req.body.userId, password: req.body.password},{$set : {Token : token}},{new: true})
-  //         // console.log(response)
-  //         // res.send(true);
-
-  //         if (response !== null) {
-  //             res.json({ success: true, token: encryptedToken, mongoId: response._id });
-  //         }
-  //     })
-  // } catch (error) {
-  //     res.json({ success: "SomeError", reason: error });
-  //     console.log(error)
-  // }
-});
-
-app.get("/admin/getAllUsers", async (req, res) => {
-  try {
-    const allUsers = await register.find({});
-    res.status(200).send(allUsers);
-  } catch (error) {
-    res.status(500).send("Error fetching users");
-  }
-});
 
 app.post("/save-download-url/:mongoId", async (req, res) => {
   const downloadUrl = req.body.downloadUrl;
