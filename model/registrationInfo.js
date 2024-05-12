@@ -51,6 +51,14 @@ const registrationSchema = new Schema({
             ref: "register"
         }
     ],
+
+myContacts:[
+    {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'contactsRegister'
+    }
+],
+
     currentRescueButtonStatus: Boolean,
     rescueButtonHistory: [
         {timeWhenRescueButtonPressed: String,

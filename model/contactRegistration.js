@@ -29,6 +29,12 @@ const contactsSchema = new Schema({
             body: String
         }
     ],
+      myWomen: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "register"
+        }
+    ],
 
     // friendRequests: [
     //     {
