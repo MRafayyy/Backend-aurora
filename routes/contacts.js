@@ -5,6 +5,7 @@ const { main2 } = require('../SendMail');
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto-js");
 const FcmDeviceToken = require('../model/FCMToken');
+const register = require('../model/registrationInfo');
 const router = express.Router();
 
 
@@ -43,12 +44,12 @@ router.post("/VerifyNadraInfo", async (req, res) => {
                     fathers_name: req.body.fathers_name,
                     cnic: req.body.cnic,
                 },
-                { $set: { userId: req.body.userId, nadra_verified: 1 } },
+                { $set: { userId: req.body.userId } },
                 { new: true }
             );
             let response2 = await contactsRegister.findOneAndUpdate(
                 { userId: u },
-                { $set: { name: req.body.name } }
+                { $set: { name: req.body.name, nadra_verified: 1 } }
             );
             console.log(response);
             if (response === null) {
@@ -148,6 +149,7 @@ router.post("/login", checkLoginInfo, (req, res) => {
                         success: true,
                         token: encryptedToken,
                         mongoId: response._id,
+                        userInfo: response
                     });
                 }
             }
@@ -178,6 +180,72 @@ router.post("/verifyToken", async function verifyToken(req, res) {
     }
   });
 });
+
+
+
+
+
+//my added women
+router.get("/show-my-added-women/:mongoId", async (req, res) => {
+    try {
+      const { mongoId } = req.params;
+      const user = await contactsRegister
+        .findById(mongoId)
+        .populate("myWomen", "name email")
+        .lean();
+  
+      if (user.myWomen == undefined) {
+        res.status(200).send({ status: "empty" });
+      } else {
+        const myWomen = user.myWomen;
+        res.status(200).json(myWomen);
+      }
+    } catch (error) {
+      res.status(500).send("error fetching added women");
+    }
+  });
+
+
+
+
+
+  // remove women
+router.post("/remove-women", async (req, res) => {
+    try {
+      // const {mongoId} = req.params
+      const { currentUserId, selectedUserId } = req.body;
+  
+      await register.findByIdAndUpdate(selectedUserId, {
+        $pull: { myContacts: currentUserId },
+      });
+  
+      await contactsRegister.findByIdAndUpdate(currentUserId, {
+        $pull: { myWomen: selectedUserId },
+      });
+  
+      res.sendStatus(200);
+    } catch (error) {
+      res.statusCode(404);
+    }
+  });
+
+
+
+
+
+
+
+  //show my notifications
+  router.get("/get-mynotifs/:mongoId", async (req, res) => {
+    try {
+      let response = await contactsRegister.findById({
+        _id: req.params.mongoId,
+      });
+      res.status(200).send(response.userSpecificNotifications);
+    } catch (error) {
+      res.status(404).json({ status: "failed" });
+    }
+  });
 
 
 

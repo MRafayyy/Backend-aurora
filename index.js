@@ -247,6 +247,10 @@ app.post("/forgotpassword", cors(), async (req, res) => {
   }
 });
 
+
+
+
+
 app.post("/sendFCM", async (req, res) => {
   try {
     let totalTokens = await FcmDeviceToken.find({});

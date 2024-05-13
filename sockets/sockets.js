@@ -21,7 +21,10 @@ const handleSocketConnections = async (io) => {
 
                 try {
 
-                    console.log(data.mongoId);
+                    console.log(data.userId + " logged in");
+                    console.log("user's mongoId: " + data.mongoId);
+
+
                     let response = await register.findByIdAndUpdate(data.mongoId, {
                         is_online: 1,
                     });
@@ -100,8 +103,6 @@ const handleSocketConnections = async (io) => {
 
 
 
-
-
             socket.on("LoggedIn", async (data) => {
 
                 const { mongoId } = data;
@@ -109,11 +110,11 @@ const handleSocketConnections = async (io) => {
                 connectedUsers[socket.id] = mongoId;
 
                 try {
-
+                    console.log(data.userId + " logged in");
                     console.log("the contacts mongoId: " + data.mongoId);
 
                     let response = await contactsRegister.findByIdAndUpdate(
-                        
+
                         data.mongoId,
                         {
                             is_online: 1,

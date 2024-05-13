@@ -41,13 +41,13 @@ router.post("/VerifyNadraInfo", async (req, res) => {
           cnic: req.body.cnic,
           gender: req.body.gender,
         },
-        { $set: { userId: req.body.userId, nadra_verified: 1 } },
+        { $set: { userId: req.body.userId } },
         { new: true }
       );
       let response2 = await register.findOneAndUpdate(
         // { userId },
         { userId: u },
-        { $set: { name: req.body.userId } }
+        { $set: { name: req.body.userId, nadra_verified: 1 } }
       );
       console.log(response);
       if (response === null) {
@@ -144,6 +144,7 @@ router.post("/login", checkLoginInfo, (req, res) => {
             success: true,
             token: encryptedToken,
             mongoId: response._id,
+            userInfo: response
           });
         }
       }
@@ -201,7 +202,6 @@ router.get("/showAllContacts/:mongoId", async (req, res) => {
       currentUserContacts = [];
     }
 
-    console.log("hello finally");
 
     const allUserContactsIds = currentUserContacts;
 
@@ -242,7 +242,7 @@ router.post("/add-contact", async (req, res) => {
 });
 
 
-
+//my added contacts
 router.get("/show-my-added-contacts/:mongoId", async (req, res) => {
   try {
     const { mongoId } = req.params;
@@ -259,6 +259,28 @@ router.get("/show-my-added-contacts/:mongoId", async (req, res) => {
     }
   } catch (error) {
     res.status(500).send("error fetching friends");
+  }
+});
+
+
+
+// remove contact
+router.post("/remove-contact", async (req, res) => {
+  try {
+    // const {mongoId} = req.params
+    const { currentUserId, selectedUserId } = req.body;
+
+    await contactsRegister.findByIdAndUpdate(selectedUserId, {
+      $pull: { myWomen: currentUserId },
+    });
+
+    await register.findByIdAndUpdate(currentUserId, {
+      $pull: { myContacts: selectedUserId },
+    });
+
+    res.sendStatus(200);
+  } catch (error) {
+    res.statusCode(404);
   }
 });
 
@@ -281,6 +303,7 @@ router.get("/my-friends/:mongoId", async (req, res) => {
       res.status(200).send({ status: "empty" });
     } else {
       const friends = user.friends;
+      
       res.status(200).json(friends);
     }
   } catch (error) {
@@ -347,7 +370,7 @@ router.post("/friend-Request", async (req, res) => {
 
 
 
-
+// remove friend
 router.post("/remove-friend", async (req, res) => {
   try {
     // const {mongoId} = req.params
@@ -443,7 +466,6 @@ router.get("/users/:mongoId", async (req, res) => {
       currentUserReceivedFriendReqs = [];
     }
 
-    console.log("hello finally");
 
     const allUserIds = [
       ...currentUserFriends,
