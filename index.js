@@ -77,6 +77,7 @@ app.post("/pressedRescueButton/:mongoId", async (req, res) => {
     const user = await register
       .findById(mongoId)
       .populate("friends", "_id name userSpecificNotifications FCMDeviceToken")
+      .populate("myContacts", "_id name userSpecificNotifications FCMDeviceToken")
       .lean();
 
     const data = {
@@ -84,7 +85,9 @@ app.post("/pressedRescueButton/:mongoId", async (req, res) => {
       body: "Please rush to help your friend.",
     };
 
-    await sendNotifToMany(data, user.friends);
+
+
+    await sendNotifToMany(data, user.friends, user.myContacts);
 
     const rescueButtonObject = req.body;
 
@@ -116,7 +119,8 @@ app.post("/pressedSafeButton/:mongoId", async (req, res) => {
 
     const user = await register
       .findById(mongoId)
-      .populate("friends", "name FCMDeviceToken")
+      .populate("friends", "_id name userSpecificNotifications FCMDeviceToken")
+      .populate("myContacts", "_id name userSpecificNotifications FCMDeviceToken")
       .lean();
 
     const data = {
@@ -124,7 +128,9 @@ app.post("/pressedSafeButton/:mongoId", async (req, res) => {
       body: "Your friend is not in danger anymmore.",
     };
 
-    await sendNotifToMany(data, user.friends);
+
+
+    await sendNotifToMany(data, user.friends, user.myContacts);
 
     let length = user.rescueButtonHistory.length - 1;
     let response = await register.findByIdAndUpdate(
@@ -210,7 +216,7 @@ app.put("/do", async (req, res) => {
       {},
       // { $set: { rescueButtonHistory: [] } }
       // { $set: { userSpecificNotifications: [] } }
-      { $set: { myWomen : [] } }
+      { $set: { myWomen: [] } }
     );
 
     res.status(200).json({ message: "done", updatedCount: response.nModified });
@@ -423,16 +429,20 @@ const sendNotifToOne = async (data, User) => {
   );
 };
 
-const sendNotifToMany = async (data, Users) => {
+const sendNotifToMany = async (data, Users, Contacts) => {
+
+  const allConcernedUsers = Users.concat(Contacts);
+
   console.log(data);
   const fcm = new FCM(
     "AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO"
   );
   let dv = [];
 
-  Users.forEach((value, index) => {
+  allConcernedUsers.forEach((value, index) => {
     dv.push(value.FCMDeviceToken);
   });
+
   const currentDate = moment().tz("Asia/Karachi");
   console.log(currentDate);
   const hours = currentDate.hours();
@@ -446,16 +456,58 @@ const sendNotifToMany = async (data, Users) => {
     body: data.body,
   };
 
-  Users.forEach(async (value, index) => {
-    await register.findByIdAndUpdate(
-      { _id: value._id },
-      {
-        $push: {
-          userSpecificNotifications: notifObj,
-        },
-      }
-    );
-  });
+  // Users.forEach(async (value, index) => {
+  //   await register.findByIdAndUpdate(
+  //     { _id: value._id },
+  //     {
+  //       $push: {
+  //         userSpecificNotifications: notifObj,
+  //       },
+  //     }
+  //   );
+  // });
+
+  // Contacts.forEach(async (value, index) => {
+  //   await contactsRegister.findByIdAndUpdate(
+  //     { _id: value._id },
+  //     {
+  //       $push: {
+  //         userSpecificNotifications: notifObj,
+  //       },
+  //     }
+  //   );
+  // });
+
+
+  // Construct an array of promises for updating documents in the 'register' collection
+const updateRegisterPromises = Users.map(async (value) => {
+  await register.findByIdAndUpdate(
+    { _id: value._id },
+    {
+      $push: {
+        userSpecificNotifications: notifObj,
+      },
+    }
+  );
+});
+
+// Construct an array of promises for updating documents in the 'contactsRegister' collection
+const updateContactsRegisterPromises = Contacts.map(async (value) => {
+  await contactsRegister.findByIdAndUpdate(
+    { _id: value._id },
+    {
+      $push: {
+        userSpecificNotifications: notifObj,
+      },
+    }
+  );
+});
+
+
+// Wait for all update operations to complete
+await Promise.all([...updateRegisterPromises, ...updateContactsRegisterPromises]);
+
+  
 
   // await adminNotifications.insertMany({
   //   date: currentDate.toISOString().split("T")[0],
