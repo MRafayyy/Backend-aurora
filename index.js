@@ -62,9 +62,16 @@ app.get('/getRescueButtonStatus/:mongoId', async (req, res) => {
     const mongoId = req.params.mongoId
     let user = await register.findById(mongoId)
     const status = user.currentRescueButtonStatus
-    const location = user.rescueButtonHistory.pop().locationWhereRescuePressed
-
+    
+    if(user.rescueButtonHistory.length!==0){
+      const location = user.rescueButtonHistory.pop().locationWhereRescuePressed
     res.status(200).send({ status, location })
+    }
+    else{
+      res.status(200).send({ status })
+      
+    }
+
   } catch (error) {
     res.send("Invalid error")
   }
@@ -212,12 +219,17 @@ app.put("/do", async (req, res) => {
     //   { $set: { myContacts : [] } }
     // );
 
-    let response = await contactsRegister.updateMany(
-      {},
+   // let response = await contactsRegister.updateMany(
+    //  {},
       // { $set: { rescueButtonHistory: [] } }
       // { $set: { userSpecificNotifications: [] } }
-      { $set: { myWomen: [] } }
-    );
+     // { $set: { myWomen: [] } }
+   // );
+
+   let response = await register.updateMany(
+    {},
+      { $set: { currentRescueButtonStatus: false } }
+   )
 
     res.status(200).json({ message: "done", updatedCount: response.nModified });
   } catch (error) {

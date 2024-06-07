@@ -44,12 +44,15 @@ router.post("/VerifyNadraInfo", async (req, res) => {
         { $set: { userId: req.body.userId } },
         { new: true }
       );
-      let response2 = await register.findOneAndUpdate(
-        // { userId },
-        { userId: u },
-        { $set: { name: req.body.userId, nadra_verified: 1 } }
-      );
       console.log(response);
+      if(response!==null){
+
+        let response2 = await register.findOneAndUpdate(
+          // { userId },
+        { userId: u },
+      { $set: { name: req.body.userId, nadra_verified: 1 } }
+    );
+  }
       if (response === null) {
         res.status(500).send(false);
         console.log(response);
