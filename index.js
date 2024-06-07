@@ -566,7 +566,8 @@ await Promise.all([...updateRegisterPromises, ...updateContactsRegisterPromises]
   );
 };
 
-server.listen(3000, () => {
+const port = process.env.PORT || 3000;
+server.listen(port, () => {
   console.log("server running on port 3000");
 });
 
