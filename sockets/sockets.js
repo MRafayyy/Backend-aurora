@@ -172,11 +172,19 @@ const handleSocketConnections = async (io) => {
             console.log("admin connected");
             try {
                 const allUsers = await register.find({});
-                const allUserIds = allUsers.map((value, index) => {
-                    return value.userId;
+                // const allUserIds = allUsers.map((value, index) => {
+                //     return value.userId;
+                // });
+
+                // socket.join(allUserIds);
+
+                allUsers.forEach((user) => {
+                    socket.join(user._id.toString()); // Join room based on MongoDB ID
+                    socket.join(user.userId); // Join room based on user ID
                 });
 
-                socket.join(allUserIds);
+
+                
             } catch (error) {
                 console.log(error);
             }

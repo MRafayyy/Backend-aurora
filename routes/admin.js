@@ -1,5 +1,7 @@
 const express = require('express');
 const Admin = require('../model/AdminInfo');
+const register = require('../model/registrationInfo');
+const contactsRegister = require('../model/contactRegistration');
 const router = express.Router();
 
 
@@ -94,6 +96,16 @@ router.post("/login", checkAdminLoginInfo, (req, res) => {
 router.get("/getAllUsers", async (req, res) => {
     try {
       const allUsers = await register.find({});
+      res.status(200).send(allUsers);
+    } catch (error) {
+      res.status(500).send("Error fetching users");
+    }
+  });
+
+
+  router.get("/getAllContactUsers", async (req, res) => {
+    try {
+      const allUsers = await contactsRegister.find({});
       res.status(200).send(allUsers);
     } catch (error) {
       res.status(500).send("Error fetching users");
