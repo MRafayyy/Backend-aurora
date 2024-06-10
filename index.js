@@ -370,20 +370,9 @@ app.post("/save-download-url/:mongoId", async (req, res) => {
   }
 });
 
-app.post("/sendToOne/:mongoId", async (req, res) => {
-  const data = {
-    body: req.body.body,
-    title: req.body.title,
-  };
-  try {
-    let User = await register.findById({ _id: req.params.mongoId });
-    // console.log(totalTokens)
-    // res.json(totalTokens)
-    sendNotifToOne(data, User);
-  } catch (error) {
-    console.log("error isssssssss:" + error);
-  }
-});
+
+
+
 
 const sendNotifToOne = async (data, User) => {
   console.log(data);
@@ -401,12 +390,33 @@ const sendNotifToOne = async (data, User) => {
   const minutes = currentDate.minutes();
   const ampm = hours >= 12 ? "PM" : "AM";
 
-  await adminNotifications.insertMany({
+  // await adminNotifications.insertMany({
+  //   date: currentDate.toISOString().split("T")[0],
+  //   time: `${hours % 12}:${minutes < 10 ? "0" : ""}${minutes} ${ampm}`,
+  //   title: data.title,
+  //   body: data.body,
+  // });
+
+  const notifObj = {
     date: currentDate.toISOString().split("T")[0],
     time: `${hours % 12}:${minutes < 10 ? "0" : ""}${minutes} ${ampm}`,
     title: data.title,
     body: data.body,
-  });
+  };
+try {
+  
+ let response = await register.findByIdAndUpdate(
+    { _id: User._id },
+    {
+      $push: {
+        userSpecificNotifications: notifObj,
+      },
+    }
+  );
+
+  } catch (error) {
+  console.log(error)  
+  }
 
   fcm.send(
     {
@@ -422,13 +432,6 @@ const sendNotifToOne = async (data, User) => {
         icon: "https://img.freepik.com/free-photo/3d-illustration-blue-purple-futuristic-sci-fi-techno-lights-cool-background_181624-57587.jpg",
         sound: "mySound",
       },
-      // notification: {
-      //   body: data.body,
-      //   title: data.title,
-      //   // imageUrl: 'https://my-cdn.com/app-logo.png',
-      //   icon: "myicon",
-      //   sound: "mySound",
-      // },
     },
     (err, response) => {
       if (err) {
@@ -440,6 +443,32 @@ const sendNotifToOne = async (data, User) => {
     }
   );
 };
+
+
+
+
+app.post("/sendToOneWomen/:mongoId", async (req, res) => {
+  const data = {
+    body: req.body.body,
+    title: req.body.title,
+  };
+  try {
+    const User = await register.findById({_id: req.params.mongoId});
+    // console.log(totalTokens)
+    // res.json(totalTokens)
+    sendNotifToOne(data, User);
+
+  } catch (error) {
+    console.log("error isssssssss:" + error);
+  }
+});
+
+
+
+
+
+
+
 
 const sendNotifToMany = async (data, Users, Contacts) => {
 
@@ -467,29 +496,6 @@ const sendNotifToMany = async (data, Users, Contacts) => {
     title: data.title,
     body: data.body,
   };
-
-  // Users.forEach(async (value, index) => {
-  //   await register.findByIdAndUpdate(
-  //     { _id: value._id },
-  //     {
-  //       $push: {
-  //         userSpecificNotifications: notifObj,
-  //       },
-  //     }
-  //   );
-  // });
-
-  // Contacts.forEach(async (value, index) => {
-  //   await contactsRegister.findByIdAndUpdate(
-  //     { _id: value._id },
-  //     {
-  //       $push: {
-  //         userSpecificNotifications: notifObj,
-  //       },
-  //     }
-  //   );
-  // });
-
 
   // Construct an array of promises for updating documents in the 'register' collection
 const updateRegisterPromises = Users.map(async (value) => {

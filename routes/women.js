@@ -45,14 +45,14 @@ router.post("/VerifyNadraInfo", async (req, res) => {
         { new: true }
       );
       console.log(response);
-      if(response!==null){
+      if (response !== null) {
 
         let response2 = await register.findOneAndUpdate(
           // { userId },
-        { userId: u },
-      { $set: { name: req.body.userId, nadra_verified: 1 } }
-    );
-  }
+          { userId: u },
+          { $set: { name: req.body.userId, nadra_verified: 1 } }
+        );
+      }
       if (response === null) {
         res.status(500).send(false);
         console.log(response);
@@ -306,7 +306,7 @@ router.get("/my-friends/:mongoId", async (req, res) => {
       res.status(200).send({ status: "empty" });
     } else {
       const friends = user.friends;
-      
+
       res.status(200).json(friends);
     }
   } catch (error) {
@@ -488,5 +488,18 @@ router.get("/users/:mongoId", async (req, res) => {
   }
 });
 
+
+
+router.get("/getRescueHistory/:mongoId", async (req, res) => {
+  try {
+    const { mongoId } = req.params;
+    const user = await register.findById(mongoId)
+    res.status(200).json(user.rescueButtonHistory)
+  }
+  catch {
+
+  }
+}
+)
 
 module.exports = router;
