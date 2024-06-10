@@ -497,7 +497,7 @@ router.get("/getRescueHistory/:mongoId", async (req, res) => {
     res.status(200).json(user.rescueButtonHistory)
   }
   catch {
-
+console.log(error)
   }
 }
 )
