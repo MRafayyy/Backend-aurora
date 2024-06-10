@@ -463,6 +463,22 @@ app.post("/sendToOneWomen/:mongoId", async (req, res) => {
   }
 });
 
+app.post("/sendToOneContact/:mongoId", async (req, res) => {
+  const data = {
+    body: req.body.body,
+    title: req.body.title,
+  };
+  try {
+    const User = await contactsRegister.findById({_id: req.params.mongoId});
+    // console.log(totalTokens)
+    // res.json(totalTokens)
+    sendNotifToOne(data, User);
+
+  } catch (error) {
+    console.log("error isssssssss:" + error);
+  }
+});
+
 
 
 
