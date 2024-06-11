@@ -497,9 +497,31 @@ router.get("/getRescueHistory/:mongoId", async (req, res) => {
     res.status(200).json(user.rescueButtonHistory)
   }
   catch {
-console.log(error)
+    console.log(error)
   }
 }
 )
+
+
+router.get("/getVideoUrls/:mongoId", async (req, res) => {
+  try {
+    const { mongoId } = req.params;
+    const user = await register.findById(mongoId)
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json(user.rescue_video_download_urls)
+  }
+  catch {
+    console.error('Error fetching video URLs:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
+)
+
+
+
 
 module.exports = router;
