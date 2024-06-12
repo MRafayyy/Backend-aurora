@@ -181,14 +181,6 @@ app.post("/pressedSafeButton/:mongoId", async (req, res) => {
 
 
 
-
-
-const pushNotifs = () => {
-  const fcm = new FCM(
-    "AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO"
-  );
-};
-
 app.post("/EnterNadraInfo", async (req, res) => {
   // if(req.body === null){
 
@@ -276,7 +268,7 @@ app.post("/sendFCM", async (req, res) => {
     // res.json(totalTokens)
 
     const fcm = new FCM(
-      "AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO"
+      process.env.FIREBASE_KEY
     );
     let dv = [];
     totalTokens.forEach((value, index) => {
@@ -377,7 +369,7 @@ app.post("/save-download-url/:mongoId", async (req, res) => {
 const sendNotifToOne = async (data, User) => {
   console.log(data);
   const fcm = new FCM(
-    "AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO"
+    process.env.FIREBASE_KEY
   );
   let dv = [];
   dv.push(User.FCMDeviceToken);
@@ -492,7 +484,7 @@ const sendNotifToMany = async (data, Users, Contacts) => {
 
   console.log(data);
   const fcm = new FCM(
-    "AAAADz1-KfI:APA91bGJ-sKa3F15DexhEXHxHp_XWl4dEoC6HChxD6cJF42ad9RzvTj0K0KfxwCLLeAA54nWSGHwxN8ZYd2EIbBHztsXGu57ZG7jt-QKT8peIQYvyhMEWj03oX1kO2I0AYR8KVbs09gO"
+    process.env.FIREBASE_KEY
   );
   let dv = [];
 
